@@ -1,0 +1,24 @@
+{
+  "config": {
+    "error": {
+      "login_error": "Lỗi ủy quyền ({code}): {msg}"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "user_code": "User Code"
+        },
+        "description": "Nhập User Code phân biệt hoa/thường trong Rạng Đông Smart → Cài đặt → Tài khoản và bảo mật → User Code. Tích hợp này không yêu cầu mật khẩu tài khoản."
+      },
+      "scan": {
+        "description": "Dùng Rạng Đông Smart quét mã QR và chấp thuận Home Assistant, sau đó bấm tiếp tục để hoàn tất."
+      },
+      "reauth_user_code": {
+        "data": {
+          "user_code": "User Code"
+        },
+        "description": "Nhập User Code hiện tại, phân biệt hoa/thường. Không cần nhập mật khẩu."
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "config": {
+    "error": {
+      "login_error": "Authorization error ({code}): {msg}"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "user_code": "User Code"
+        },
+        "description": "Enter the case-sensitive User Code from Rạng Đông Smart → Settings → Account and Security → User Code. This integration never asks for your account password."
+      },
+      "scan": {
+        "description": "Scan this QR code with Rạng Đông Smart and approve Home Assistant. Then continue to finish authorization."
+      },
+      "reauth_user_code": {
+        "data": {
+          "user_code": "User Code"
+        },
+        "description": "Enter the current case-sensitive User Code from Rạng Đông Smart. The password is not required."
+      }
+    }
+  }
+}

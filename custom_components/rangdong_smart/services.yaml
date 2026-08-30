@@ -1,0 +1,23 @@
+send_command:
+  name: Send raw DP command
+  description: Send one Tuya data-point command to a device returned by the cloud API.
+  fields:
+    device_id:
+      name: Device ID
+      description: The device_id attribute shown by the summary sensor.
+      required: true
+      example: example-device-id
+      selector:
+        text:
+    code:
+      name: DP code
+      description: Tuya data-point code, for example switch_led or bright_value.
+      required: true
+      example: switch_led
+      selector:
+        text:
+    value:
+      name: Value
+      description: Boolean, number, string, object or list accepted by the device DP.
+      required: true
+      example: true
