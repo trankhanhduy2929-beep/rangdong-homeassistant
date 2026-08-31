@@ -136,9 +136,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
                 {
                     vol.Required(CONF_DEVICE_ID): cv.string,
                     vol.Required("code"): cv.string,
-                    vol.Required("value"): vol.Any(
-                        bool, int, float, str, dict, list
-                    ),
+                    vol.Required("value"): vol.Any(bool, int, float, str, dict, list),
                 }
             ),
         )
@@ -161,15 +159,11 @@ async def _async_send_command(call: ServiceCall) -> None:
     raise HomeAssistantError(f"Unknown Rạng Đông/Tuya device: {device_id}")
 
 
-async def async_setup_entry(
-    hass: HomeAssistant, entry: RangDongConfigEntry
-) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: RangDongConfigEntry) -> bool:
     """Set up an authorized account and its device summaries."""
 
     token_listener = TokenListener(hass, entry)
-    manager = await hass.async_add_executor_job(
-        _create_manager, entry, token_listener
-    )
+    manager = await hass.async_add_executor_job(_create_manager, entry, token_listener)
     listener = DeviceListener(hass)
     manager.add_device_listener(listener)
 
@@ -206,9 +200,7 @@ async def async_setup_entry(
     return True
 
 
-async def async_unload_entry(
-    hass: HomeAssistant, entry: RangDongConfigEntry
-) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: RangDongConfigEntry) -> bool:
     """Unload entities and stop the SDK MQTT worker."""
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
@@ -223,9 +215,7 @@ async def async_unload_entry(
     return unload_ok
 
 
-async def async_remove_entry(
-    hass: HomeAssistant, entry: RangDongConfigEntry
-) -> None:
+async def async_remove_entry(hass: HomeAssistant, entry: RangDongConfigEntry) -> None:
     """Revoke the terminal authorization when the entry is removed."""
 
     manager = Manager(

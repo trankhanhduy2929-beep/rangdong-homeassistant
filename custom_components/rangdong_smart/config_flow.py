@@ -84,10 +84,13 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._user_code,
             )
         except (requests.RequestException, ValueError, KeyError, TypeError):
-            success, info = False, {
-                "code": "NETWORK_ERROR",
-                "msg": "Unable to reach the Tuya authorization gateway",
-            }
+            success, info = (
+                False,
+                {
+                    "code": "NETWORK_ERROR",
+                    "msg": "Unable to reach the Tuya authorization gateway",
+                },
+            )
         if not success:
             await self._async_get_qr_code(self._user_code)
             return self._show_scan_form(
@@ -158,9 +161,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders=placeholders,
         )
 
-    async def _async_get_qr_code(
-        self, user_code: str
-    ) -> tuple[bool, dict[str, Any]]:
+    async def _async_get_qr_code(self, user_code: str) -> tuple[bool, dict[str, Any]]:
         """Request a temporary QR token from the Tuya gateway."""
 
         normalized_code = user_code.strip()
@@ -228,9 +229,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         }
 
     @staticmethod
-    def _entry_data(
-        info: Mapping[str, Any], user_code: str
-    ) -> dict[str, Any]:
+    def _entry_data(info: Mapping[str, Any], user_code: str) -> dict[str, Any]:
         """Validate and normalize the SDK login result."""
 
         def pick(*keys: str) -> Any:
