@@ -1,6 +1,10 @@
 {
   "config": {
+    "abort": {
+      "reauth_successful": "Re-authentication was successful"
+    },
     "error": {
+      "designated_app_error": "Rạng Đông/Tuya rejected QR authorization ({code}) because the scanner is not an approved designated app. Start a fresh flow and scan promptly with the scanner inside Rạng Đông Smart. If it fails repeatedly, the OEM must enable Home Assistant authorization; changing the QR prefix cannot bypass this backend restriction. Details: {msg}",
       "login_error": "Authorization error ({code}): {msg}"
     },
     "step": {
@@ -11,7 +15,10 @@
         "description": "Enter the case-sensitive User Code from Rạng Đông Smart → Settings → Account and Security → User Code. This integration never asks for your account password."
       },
       "scan": {
-        "description": "Scan this QR code with Rạng Đông Smart and approve Home Assistant. Then continue to finish authorization."
+        "data": {
+          "qr": "QR code"
+        },
+        "description": "Use the Scan/QR function inside Rạng Đông Smart, not the phone camera. Scan promptly, approve Home Assistant, then continue. If the app reports a designated-app error, continue once to generate a fresh QR and scan again. Repeated E0020003 means the Tuya/OEM service rejected this app/account authorization."
       },
       "reauth_user_code": {
         "data": {

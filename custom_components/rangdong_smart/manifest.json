@@ -8,5 +8,5 @@
   "integration_type": "hub",
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/trankhanhduy2929-beep/rangdong-homeassistant/issues",
-  "version": "0.1.1"
+  "version": "0.1.2"
 }

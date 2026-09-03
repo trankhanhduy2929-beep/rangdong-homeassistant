@@ -1,6 +1,10 @@
 {
   "config": {
+    "abort": {
+      "reauth_successful": "Xác thực lại thành công"
+    },
     "error": {
+      "designated_app_error": "Rạng Đông/Tuya từ chối ủy quyền QR ({code}) vì app quét không nằm trong danh sách ứng dụng được chỉ định. Hãy tạo luồng mới và quét ngay bằng chức năng Scan trong Rạng Đông Smart. Nếu lỗi lặp lại, phía OEM phải bật quyền Home Assistant; đổi prefix QR không thể vượt qua giới hạn backend này. Chi tiết: {msg}",
       "login_error": "Lỗi ủy quyền ({code}): {msg}"
     },
     "step": {
@@ -11,7 +15,10 @@
         "description": "Nhập User Code phân biệt hoa/thường trong Rạng Đông Smart → Cài đặt → Tài khoản và bảo mật → User Code. Tích hợp này không yêu cầu mật khẩu tài khoản."
       },
       "scan": {
-        "description": "Dùng Rạng Đông Smart quét mã QR và chấp thuận Home Assistant, sau đó bấm tiếp tục để hoàn tất."
+        "data": {
+          "qr": "Mã QR"
+        },
+        "description": "Dùng chức năng Scan/QR bên trong Rạng Đông Smart, không dùng camera thường của điện thoại. Quét ngay, chấp thuận Home Assistant rồi bấm tiếp tục. Nếu app báo lỗi designated app, bấm tiếp tục một lần để tạo QR mới và quét lại. Nếu E0020003 lặp lại, dịch vụ Tuya/OEM đã từ chối quyền của app/tài khoản này."
       },
       "reauth_user_code": {
         "data": {

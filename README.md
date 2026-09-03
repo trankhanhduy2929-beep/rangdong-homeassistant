@@ -41,12 +41,36 @@ accepted into the default HACS catalog.
 
 1. In Rạng Đông Smart, open **Settings → Account and Security → User Code**.
 2. Enter the code in the Home Assistant config flow; preserve capitalization.
-3. Scan the QR code shown by Home Assistant with Rạng Đông Smart and approve
-   the authorization.
+3. Open the QR scanner inside Rạng Đông Smart, scan the QR code shown by Home
+   Assistant, and approve the authorization.
 4. Return to Home Assistant and finish the flow.
 
 Never put an account password, access token, refresh token, local key, or QR
 token in this repository, an issue, or a public log.
+
+### Designated-app error
+
+If Rạng Đông Smart displays **“please use the designated app to scan the code
+to log in”** and Home Assistant reports `E0020003`, the QR format is not the
+problem. This response indicates that the Tuya/OEM backend has rejected the
+mobile-app and account combination. The integration intentionally keeps the
+standard `tuyaSmart--qrLogin` payload used by the ThingClips scanner; changing
+the prefix to `rangdongsmart--` or `thingSmart--` does not bypass the server
+authorization policy.
+
+Try these steps:
+
+1. Update Home Assistant and Rạng Đông Smart, then start a new flow and scan
+   the newly generated QR immediately.
+2. Use the scanner inside the app, not the phone's general camera or a third-
+   party QR reader.
+3. After a failed scan, press **Continue** once. Version `0.1.2` requests a
+   fresh token and only displays the replacement QR when that request succeeds.
+4. If the account and devices are also available in the official Tuya Smart
+   or Smart Life app, try Home Assistant's built-in **Tuya** integration.
+5. If the branded Rạng Đông app still rejects repeated fresh codes, request OEM Home
+   Assistant authorization from Rạng Đông/Tuya; a custom component cannot
+   safely bypass that server-side restriction.
 
 ## Manual installation
 
@@ -78,8 +102,8 @@ Tuya integration's model-specific entities for everyday control.
 
 The installable integration lives under `custom_components/rangdong_smart`.
 HACS installs that source directory from the repository. Pushing a tag such as
-`v0.1.1` also runs the release workflow and attaches a clean
-`rangdong_smart-v0.1.1.zip` archive for manual downloads. The ZIP is generated
+`v0.1.2` also runs the release workflow and attaches a clean
+`rangdong_smart-v0.1.2.zip` archive for manual downloads. The ZIP is generated
 at release time and is intentionally not committed to the source tree.
 
 For a new release, update the integration version in
@@ -87,8 +111,8 @@ For a new release, update the integration version in
 with the same version, for example:
 
 ```sh
-git tag -a v0.1.1 -m "Release v0.1.1"
-git push origin main v0.1.1
+git tag -a v0.1.2 -m "Release v0.1.2"
+git push origin main v0.1.2
 ```
 
 The release workflow reruns Hassfest and HACS validation, then checks that the
@@ -105,6 +129,9 @@ GitHub Release should exist.
 ## Troubleshooting
 
 - If QR authorization expires, restart the config flow and generate a new QR.
+- If the app reports the designated-app message, follow the steps in
+  **Designated-app error**; changing the QR prefix will not fix a backend
+  restriction.
 - If a newly added device is missing, reload the integration or restart Home
   Assistant.
 - If diagnostics are requested, use Home Assistant's **Download diagnostics**;

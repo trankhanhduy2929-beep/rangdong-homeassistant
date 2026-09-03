@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -218,11 +219,27 @@ async def async_unload_entry(hass: HomeAssistant, entry: RangDongConfigEntry) ->
 async def async_remove_entry(hass: HomeAssistant, entry: RangDongConfigEntry) -> None:
     """Revoke the terminal authorization when the entry is removed."""
 
+    token_info = entry.data.get(CONF_TOKEN_INFO)
+    terminal_id = entry.data.get(CONF_TERMINAL_ID)
+    endpoint = entry.data.get(CONF_ENDPOINT)
+    user_code = entry.data.get(CONF_USER_CODE)
+    if (
+        not isinstance(token_info, Mapping)
+        or not token_info.get("access_token")
+        or not terminal_id
+        or not endpoint
+        or not user_code
+    ):
+        return
+
     manager = Manager(
         TUYA_CLIENT_ID,
-        entry.data[CONF_USER_CODE],
-        entry.data[CONF_TERMINAL_ID],
-        entry.data[CONF_ENDPOINT],
-        entry.data[CONF_TOKEN_INFO],
+        user_code,
+        terminal_id,
+        endpoint,
+        dict(token_info),
     )
-    await hass.async_add_executor_job(manager.unload)
+    try:
+        await hass.async_add_executor_job(manager.unload)
+    except Exception:
+        LOGGER.debug("Unable to revoke the Tuya terminal authorization", exc_info=True)

@@ -21,9 +21,17 @@ from .const import (
     CONF_TOKEN_INFO,
     CONF_USER_CODE,
     DOMAIN,
+    QR_DESIGNATED_APP_CODES,
+    QR_PAYLOAD_PREFIX,
     TUYA_CLIENT_ID,
     TUYA_SCHEMA,
 )
+
+
+def build_qr_payload(qr_token: str) -> str:
+    """Build the QR payload accepted by the ThingClips scanner."""
+
+    return f"{QR_PAYLOAD_PREFIX}{qr_token}"
 
 
 class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -51,21 +59,14 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             )
             if success:
                 return await self.async_step_scan()
-            errors["base"] = "login_error"
+            errors["base"] = self._error_key(response)
             placeholders = self._error_placeholders(response)
 
-        return self.async_show_form(
+        return self._show_user_code_form(
             step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_USER_CODE,
-                        default=(user_input or {}).get(CONF_USER_CODE, ""),
-                    ): str,
-                }
-            ),
+            user_code=(user_input or {}).get(CONF_USER_CODE, ""),
             errors=errors,
-            description_placeholders=placeholders,
+            placeholders=placeholders,
         )
 
     async def async_step_scan(
@@ -74,6 +75,11 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         """Show the QR code and finish after the app approves it."""
 
         if user_input is None:
+            if not self._user_code or not self._qr_token:
+                return self._show_user_code_form(
+                    step_id=self._user_code_step_id(),
+                    user_code=self._user_code,
+                )
             return self._show_scan_form()
 
         try:
@@ -91,11 +97,28 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                     "msg": "Unable to reach the Tuya authorization gateway",
                 },
             )
+        if not isinstance(info, Mapping):
+            success, info = (
+                False,
+                {
+                    "code": "INVALID_RESPONSE",
+                    "msg": "Gateway returned an invalid login response",
+                },
+            )
         if not success:
-            await self._async_get_qr_code(self._user_code)
+            error_key = self._error_key(info)
+            placeholders = self._error_placeholders(info)
+            refreshed, refresh_response = await self._async_get_qr_code(self._user_code)
+            if not refreshed:
+                return self._show_user_code_form(
+                    step_id=self._user_code_step_id(),
+                    user_code=self._user_code,
+                    errors={"base": self._error_key(refresh_response)},
+                    placeholders=self._error_placeholders(refresh_response),
+                )
             return self._show_scan_form(
-                errors={"base": "login_error"},
-                placeholders=self._error_placeholders(info),
+                errors={"base": error_key},
+                placeholders=placeholders,
             )
 
         try:
@@ -144,32 +167,26 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             )
             if success:
                 return await self.async_step_scan()
-            errors["base"] = "login_error"
+            errors["base"] = self._error_key(response)
             placeholders = self._error_placeholders(response)
 
-        return self.async_show_form(
+        return self._show_user_code_form(
             step_id="reauth_user_code",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_USER_CODE,
-                        default=(user_input or {}).get(CONF_USER_CODE, ""),
-                    ): str,
-                }
-            ),
+            user_code=(user_input or {}).get(CONF_USER_CODE, ""),
             errors=errors,
-            description_placeholders=placeholders,
+            placeholders=placeholders,
         )
 
     async def _async_get_qr_code(self, user_code: str) -> tuple[bool, dict[str, Any]]:
         """Request a temporary QR token from the Tuya gateway."""
 
+        self._qr_token = ""
         normalized_code = user_code.strip()
         if not normalized_code:
             return False, {"code": "USERCODE_EMPTY", "msg": "User Code is required"}
 
         try:
-            response = await self.hass.async_add_executor_job(
+            raw_response = await self.hass.async_add_executor_job(
                 self._login_control.qr_code,
                 TUYA_CLIENT_ID,
                 TUYA_SCHEMA,
@@ -180,6 +197,12 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 "code": "NETWORK_ERROR",
                 "msg": "Unable to reach the Tuya authorization gateway",
             }
+        if not isinstance(raw_response, Mapping):
+            return False, {
+                "code": "INVALID_RESPONSE",
+                "msg": "Gateway returned an invalid QR response",
+            }
+        response = dict(raw_response)
 
         if response.get("success"):
             result = response.get("result")
@@ -195,6 +218,35 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             }
         return False, response
 
+    def _show_user_code_form(
+        self,
+        *,
+        step_id: str,
+        user_code: str = "",
+        errors: dict[str, str] | None = None,
+        placeholders: dict[str, str] | None = None,
+    ) -> ConfigFlowResult:
+        """Render a User Code form for initial setup or reauthentication."""
+
+        return self.async_show_form(
+            step_id=step_id,
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_USER_CODE,
+                        default=user_code,
+                    ): str,
+                }
+            ),
+            errors=errors or {},
+            description_placeholders=placeholders or {},
+        )
+
+    def _user_code_step_id(self) -> str:
+        """Return the User Code step matching the current flow source."""
+
+        return "reauth_user_code" if self.source == SOURCE_REAUTH else "user"
+
     def _show_scan_form(
         self,
         errors: dict[str, str] | None = None,
@@ -208,7 +260,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 {
                     vol.Optional("qr"): selector.QrCodeSelector(
                         config=selector.QrCodeSelectorConfig(
-                            data=f"tuyaSmart--qrLogin?token={self._qr_token}",
+                            data=build_qr_payload(self._qr_token),
                             scale=5,
                             error_correction_level=selector.QrErrorCorrectionLevel.QUARTILE,
                         )
@@ -223,10 +275,25 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
     def _error_placeholders(response: Mapping[str, Any]) -> dict[str, str]:
         """Extract safe error fields for the translated form."""
 
+        code = " ".join(str(response.get("code", "0")).split())[:64] or "0"
+        message = (
+            " ".join(str(response.get("msg", "Unknown error")).split())[:256]
+            or "Unknown error"
+        )
         return {
-            "code": str(response.get("code", "0")),
-            "msg": str(response.get("msg", "Unknown error")),
+            "code": code,
+            "msg": message,
         }
+
+    @staticmethod
+    def _error_key(response: Mapping[str, Any]) -> str:
+        """Choose a useful message for a QR authorization failure."""
+
+        code = str(response.get("code", "")).strip().upper()
+        message = str(response.get("msg", "")).casefold()
+        if code in QR_DESIGNATED_APP_CODES or "designated app" in message:
+            return "designated_app_error"
+        return "login_error"
 
     @staticmethod
     def _entry_data(info: Mapping[str, Any], user_code: str) -> dict[str, Any]:

@@ -14,6 +14,8 @@ CONF_USER_CODE = "user_code"
 
 TUYA_CLIENT_ID = "HA_3y9q4ak7g4ephrvke"
 TUYA_SCHEMA = "haauthorize"
+QR_PAYLOAD_PREFIX = "tuyaSmart--qrLogin?token="
+QR_DESIGNATED_APP_CODES = frozenset({"E0020003"})
 
 SIGNAL_DISCOVERY_NEW = f"{DOMAIN}_discovery_new"
 SIGNAL_UPDATE_PREFIX = f"{DOMAIN}_update"
