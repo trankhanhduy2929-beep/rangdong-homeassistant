@@ -6,10 +6,15 @@
     },
     "error": {
       "cannot_connect_local": "The device was found, but Home Assistant could not read it over the LAN. Check that the device and Home Assistant are on the same network and that TCP port 6668 is reachable.",
+      "cloud_entry_unavailable": "No loaded Rạng Đông cloud entry contains a usable local key. Choose Tuya Cloud, JSON export or manual entry instead.",
+      "cloud_key_error": "Tuya Cloud could not return local keys. Check the Access ID, Access Secret, data center, API authorization and that the device account is linked to this cloud project.",
       "designated_app_error": "Rạng Đông/Tuya rejected QR authorization ({code}) because the scanner is not an approved designated app. Start a fresh flow and scan promptly with the scanner inside Rạng Đông Smart. If it fails repeatedly, the OEM must enable Home Assistant authorization; changing the QR prefix cannot bypass this backend restriction. Details: {msg}",
       "invalid_local_host": "Enter a private IPv4 address for the device.",
       "invalid_local_key": "The local key or protocol version was rejected. Check the 16-character key and try Auto protocol.",
+      "key_export_invalid": "The JSON export is invalid or contains no device ID with a 16-byte local key.",
       "local_scan_failed": "LAN scan could not complete. You can enter the device IP and ID manually.",
+      "local_key_device_mismatch": "The selected local key belongs to a different Device ID. Select the matching imported device or start again.",
+      "local_key_not_found": "No usable local key was found for this Device ID.",
       "local_setup_error": "The local device could not be configured. Check the IP, device ID, local key and protocol version.",
       "login_error": "Authorization error ({code}): {msg}"
     },
@@ -37,10 +42,42 @@
           "name": "Device name",
           "host": "Device IP address",
           "device_id": "Device ID",
+          "local_key_source": "Local key source",
           "local_key": "Local key",
           "protocol_version": "Protocol version"
         },
-        "description": "Enter the device's 16-character local key. It is not the Rạng Đông account password and cannot be learned from a LAN scan. Auto tries Tuya protocols 3.5 through 3.1 and verifies the connection before saving."
+        "description": "Choose how to obtain the device's local key. LAN discovery cannot reveal it. Manual mode uses the optional Local key field; cloud and JSON modes open a separate one-time import step. Auto tries Tuya protocols 3.5 through 3.1 before saving."
+      },
+      "local_key_cloud": {
+        "data": {
+          "device_id": "Device ID to look up",
+          "access_id": "Tuya Cloud Access ID",
+          "access_secret": "Tuya Cloud Access Secret",
+          "cloud_region": "Tuya Cloud data center"
+        },
+        "description": "Enter credentials for a Tuya IoT Cloud project you control and that contains this device. The Access ID and Access Secret are used once to fetch local keys and are never stored in the config entry. This is not the Rạng Đông app account or password."
+      },
+      "local_key_json": {
+        "data": {
+          "device_id": "Device ID to match",
+          "key_export": "TinyTuya/LocalTuya JSON export"
+        },
+        "description": "Paste a trusted JSON export containing Device ID and local key fields. TinyTuya devices.json, Tuya API local_key/localKey and common LocalTuya exports are supported. The JSON is parsed once and is not stored."
+      },
+      "local_key_device": {
+        "data": {
+          "imported_device": "Imported device"
+        },
+        "description": "Select which imported device should be configured. Local keys are hidden from this list."
+      },
+      "local_key_confirm": {
+        "data": {
+          "name": "Device name",
+          "host": "Device IP address",
+          "device_id": "Device ID",
+          "protocol_version": "Protocol version"
+        },
+        "description": "A local key was imported for Device ID {device_id}. Confirm the LAN details. The key remains hidden, is verified directly against the device and only the working local configuration is saved."
       },
       "scan": {
         "data": {
@@ -81,6 +118,14 @@
       "options": {
         "cloud_qr": "Legacy cloud QR",
         "local": "Local LAN (recommended)"
+      }
+    },
+    "local_key_source": {
+      "options": {
+        "existing_cloud": "Existing authorized cloud entry",
+        "json_export": "Import JSON export",
+        "manual": "Enter local key manually",
+        "tuya_cloud": "Fetch once from Tuya Cloud"
       }
     }
   }

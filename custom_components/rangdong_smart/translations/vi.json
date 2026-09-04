@@ -6,10 +6,15 @@
     },
     "error": {
       "cannot_connect_local": "Đã tìm thấy thiết bị nhưng Home Assistant không đọc được qua LAN. Kiểm tra thiết bị và Home Assistant cùng mạng, đồng thời TCP cổng 6668 không bị chặn.",
+      "cloud_entry_unavailable": "Không có cloud entry Rạng Đông đang hoạt động chứa local key dùng được. Hãy chọn Tuya Cloud, import JSON hoặc nhập thủ công.",
+      "cloud_key_error": "Tuya Cloud không trả được local key. Kiểm tra Access ID, Access Secret, trung tâm dữ liệu, quyền API và việc tài khoản thiết bị đã liên kết với project cloud chưa.",
       "designated_app_error": "Rạng Đông/Tuya từ chối ủy quyền QR ({code}) vì app quét không nằm trong danh sách ứng dụng được chỉ định. Hãy tạo luồng mới và quét ngay bằng chức năng Scan trong Rạng Đông Smart. Nếu lỗi lặp lại, phía OEM phải bật quyền Home Assistant; đổi prefix QR không thể vượt qua giới hạn backend này. Chi tiết: {msg}",
       "invalid_local_host": "Hãy nhập địa chỉ IPv4 riêng của thiết bị.",
       "invalid_local_key": "Thiết bị từ chối local key hoặc phiên bản giao thức. Kiểm tra khóa 16 ký tự và thử giao thức Tự động.",
+      "key_export_invalid": "JSON export không hợp lệ hoặc không có cặp Device ID và local key 16 byte.",
       "local_scan_failed": "Không quét LAN được. Anh có thể nhập thủ công IP và Device ID.",
+      "local_key_device_mismatch": "Local key đã chọn thuộc Device ID khác. Hãy chọn đúng thiết bị trong export hoặc bắt đầu lại.",
+      "local_key_not_found": "Không tìm thấy local key dùng được cho Device ID này.",
       "local_setup_error": "Không cấu hình được thiết bị local. Kiểm tra IP, Device ID, local key và phiên bản giao thức.",
       "login_error": "Lỗi ủy quyền ({code}): {msg}"
     },
@@ -37,10 +42,42 @@
           "name": "Tên thiết bị",
           "host": "Địa chỉ IP thiết bị",
           "device_id": "Device ID",
+          "local_key_source": "Nguồn local key",
           "local_key": "Local key",
           "protocol_version": "Phiên bản giao thức"
         },
-        "description": "Nhập local key 16 ký tự của thiết bị. Đây không phải mật khẩu tài khoản Rạng Đông và không thể lấy được chỉ bằng quét LAN. Chế độ Tự động thử giao thức Tuya 3.5 đến 3.1 rồi kiểm tra kết nối trước khi lưu."
+        "description": "Chọn cách lấy local key. Quét LAN không thể tiết lộ key. Chế độ thủ công dùng ô Local key; chế độ cloud và JSON mở bước import một lần riêng. Tự động thử giao thức Tuya 3.5 đến 3.1 trước khi lưu."
+      },
+      "local_key_cloud": {
+        "data": {
+          "device_id": "Device ID cần tìm",
+          "access_id": "Tuya Cloud Access ID",
+          "access_secret": "Tuya Cloud Access Secret",
+          "cloud_region": "Trung tâm dữ liệu Tuya Cloud"
+        },
+        "description": "Nhập thông tin của Tuya IoT Cloud project do anh quản lý và đã chứa thiết bị này. Access ID và Access Secret chỉ dùng một lần để lấy local key, không được lưu vào config entry. Đây không phải tài khoản hay mật khẩu Rạng Đông."
+      },
+      "local_key_json": {
+        "data": {
+          "device_id": "Device ID để đối chiếu",
+          "key_export": "JSON export TinyTuya/LocalTuya"
+        },
+        "description": "Dán JSON export đáng tin cậy có Device ID và trường local key. Hỗ trợ devices.json của TinyTuya, local_key/localKey của Tuya API và các export LocalTuya phổ biến. JSON chỉ được parse một lần và không được lưu."
+      },
+      "local_key_device": {
+        "data": {
+          "imported_device": "Thiết bị trong export"
+        },
+        "description": "Chọn thiết bị cần cấu hình trong export. Local key được ẩn khỏi danh sách."
+      },
+      "local_key_confirm": {
+        "data": {
+          "name": "Tên thiết bị",
+          "host": "Địa chỉ IP thiết bị",
+          "device_id": "Device ID",
+          "protocol_version": "Phiên bản giao thức"
+        },
+        "description": "Đã import local key cho Device ID {device_id}. Xác nhận thông tin LAN. Key được ẩn, kiểm tra trực tiếp với thiết bị và chỉ cấu hình local đang hoạt động được lưu."
       },
       "scan": {
         "data": {
@@ -81,6 +118,14 @@
       "options": {
         "cloud_qr": "QR cloud cũ",
         "local": "LAN nội bộ (khuyên dùng)"
+      }
+    },
+    "local_key_source": {
+      "options": {
+        "existing_cloud": "Cloud entry đã xác thực",
+        "json_export": "Import JSON export",
+        "manual": "Nhập local key thủ công",
+        "tuya_cloud": "Lấy một lần từ Tuya Cloud"
       }
     }
   }

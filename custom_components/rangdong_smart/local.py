@@ -66,6 +66,15 @@ def normalize_local_host(value: str) -> str:
     return str(address)
 
 
+def normalize_local_key(value: Any) -> str:
+    """Validate a Tuya local key as exactly 16 UTF-8 bytes."""
+
+    normalized = str(value or "")
+    if len(normalized.encode("utf-8")) != 16:
+        raise ValueError("Local key must contain exactly 16 bytes")
+    return normalized
+
+
 def scan_lan_devices() -> dict[str, DiscoveredLocalDevice]:
     """Actively scan the LAN for Tuya-compatible devices."""
 
@@ -131,11 +140,12 @@ def probe_local_device(
 
     normalized_host = normalize_local_host(host)
     normalized_id = device_id.strip()
-    normalized_key = local_key.strip()
+    try:
+        normalized_key = normalize_local_key(local_key)
+    except ValueError as error:
+        raise RangDongLocalAuthError(str(error)) from error
     if not normalized_id:
         raise RangDongLocalAuthError("Device ID is required")
-    if len(normalized_key) != 16:
-        raise RangDongLocalAuthError("Local key must contain exactly 16 characters")
 
     try:
         with socket.create_connection((normalized_host, TUYA_LOCAL_PORT), timeout=3):
@@ -242,13 +252,12 @@ class RangDongLocalClient:
     ) -> None:
         self.host = normalize_local_host(host)
         self.device_id = device_id.strip()
-        normalized_key = local_key.strip()
+        try:
+            normalized_key = normalize_local_key(local_key)
+        except ValueError as error:
+            raise RangDongLocalAuthError(str(error)) from error
         if not self.device_id:
             raise RangDongLocalAuthError("Device ID is required")
-        if len(normalized_key) != 16:
-            raise RangDongLocalAuthError(
-                "Local key must contain exactly 16 characters"
-            )
         self.protocol_version = protocol_candidates(protocol_version)[0]
         self._device = create_tinytuya_device(
             self.device_id,

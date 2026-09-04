@@ -17,6 +17,10 @@ fallback.
 - Direct TCP control on port `6668`; no cloud or MQTT connection is used in
   Local LAN mode.
 - Automatic protocol probing for Tuya `3.5` through `3.1`.
+- One-time `local_key` retrieval from a user-controlled Tuya IoT Cloud
+  project. The project Access ID and Access Secret are not stored.
+- One-time import from TinyTuya, Tuya API and common LocalTuya JSON exports.
+- Reuse of a `local_key` already present in a working Rạng Đông QR/cloud entry.
 - A switch entity for each boolean DP and a diagnostic LAN status sensor with
   the current DP snapshot.
 - `rangdong_smart.send_command` for numeric local DPs and legacy cloud DPs.
@@ -26,8 +30,9 @@ fallback.
 
 LAN discovery does **not** reveal the device's `local_key`. The key is a
 per-device credential and is required by the encrypted Tuya local protocol.
-The setup flow therefore scans for the IP/ID first, then asks for the local
-key and verifies it before creating the entry.
+The setup flow scans the IP/ID first, then lets you retrieve the key once from
+an authorized source, import a JSON export or enter it manually. The key is
+verified against the LAN device before the entry is created.
 
 Do not use the Rạng Đông account password as the local key. Never put a local
 key, account password, token or APK secret in an issue, public log or GitHub
@@ -49,7 +54,12 @@ repository.
    Assistant.
 3. Select the device found by the scan. If the list is empty, choose
    **Enter manually** and enter its IP address and device ID.
-4. Enter the device's 16-character `local_key`.
+4. Select a local-key source:
+   - **Fetch once from Tuya Cloud** for a linked Tuya IoT developer project;
+   - **Import JSON export** for TinyTuya/LocalTuya/Tuya API data;
+   - **Existing authorized cloud entry** when a working QR entry already has
+     the same device; or
+   - **Enter local key manually**.
 5. Leave **Auto** selected for protocol version unless the device requires a
    known version. The flow reads the device before saving the configuration.
 
@@ -65,6 +75,44 @@ it include:
   containing the key;
 - the Tuya developer/cloud device details for an account you control; or
 - a private, consent-based extraction from your own logged-in Android device.
+
+### Automatic one-time Tuya Cloud retrieval
+
+The integration can retrieve keys from a Tuya IoT Cloud project that you
+control:
+
+1. Create or open a cloud project in the Tuya IoT Platform.
+2. Link the Tuya/Rạng Đông app account or the exact device to that project and
+   enable the device-management API permissions needed to list devices.
+3. In the integration, select **Fetch once from Tuya Cloud**.
+4. Enter the project **Access ID**, **Access Secret**, data center and Device
+   ID.
+5. Confirm the LAN address. The integration verifies the key locally and saves
+   only the resulting local device configuration.
+
+The Access ID, Access Secret and cloud response are not saved in the Home
+Assistant config entry or diagnostics. The project can be disabled after a
+successful import if it is not needed elsewhere.
+
+Rạng Đông is an OEM app, so some accounts cannot be linked to a normal Tuya
+IoT project. That server-side restriction cannot be bypassed by the
+integration. Use a trusted JSON export or a private extraction from your own
+Android phone when linking is unavailable.
+
+### JSON import
+
+Select **Import JSON export** and paste trusted data containing a Device ID and
+one of these key fields: `key`, `local_key`, `localKey` or `localkey`. Supported
+layouts include:
+
+- TinyTuya `devices.json` arrays;
+- Tuya Cloud/mobile API device objects;
+- common LocalTuya exports; and
+- dictionaries keyed by Device ID.
+
+The JSON is processed in memory once. It is not stored or shown again. If the
+export contains multiple devices, the setup flow shows a key-free device list
+for selection.
 
 APK analysis confirms that the logged-in Android SDK keeps the key in its
 private device cache and exposes it to the app as `DeviceBean.localKey`. Reading
@@ -146,6 +194,11 @@ Devices & services**.
   isolation.
 - **Invalid local key:** confirm the key belongs to that exact device; leave
   protocol on Auto and retry.
+- **Tuya Cloud key error:** verify the project data center, API permissions,
+  linked account/device and Access ID/Secret. OEM Rạng Đông accounts might not
+  support Tuya IoT linking.
+- **Key not found in JSON:** ensure the export contains the exact Device ID and
+  a 16-byte local key; do not paste the Rạng Đông account password.
 - **Device is Zigbee:** use ZHA/Zigbee2MQTT or the gateway integration; the
   Wi-Fi scan cannot pair a Zigbee child directly.
 - **IP changed:** open the integration entry and choose **Reconfigure**, then

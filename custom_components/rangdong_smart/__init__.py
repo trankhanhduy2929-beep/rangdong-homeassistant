@@ -48,8 +48,9 @@ from .local import RangDongLocalAuthError, RangDongLocalClient
 
 LOGGER = logging.getLogger(__package__)
 logging.getLogger("tuya_sharing").setLevel(logging.CRITICAL)
+logging.getLogger("tinytuya").setLevel(logging.CRITICAL)
 
-CONFIG_SCHEMA = cv.empty_config_schema
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 @dataclass(slots=True)
@@ -361,6 +362,6 @@ async def async_remove_entry(hass: HomeAssistant, entry: RangDongConfigEntry) ->
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Mark legacy entries as compatible with the dual-mode integration."""
 
-    if entry.version < 2:
-        hass.config_entries.async_update_entry(entry, version=2)
+    if entry.version < 3:
+        hass.config_entries.async_update_entry(entry, version=3)
     return True
