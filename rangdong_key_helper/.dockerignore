@@ -1,0 +1,7 @@
+agent/
+tests/
+DOCS.md
+CHANGELOG.md
+translations/
+*.py[cod]
+__pycache__/

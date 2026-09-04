@@ -113,6 +113,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Choose local LAN setup or the legacy QR flow."""
 
+        self._ensure_key_bridge_registered()
         if user_input is None:
             return self._show_connection_type_form()
 

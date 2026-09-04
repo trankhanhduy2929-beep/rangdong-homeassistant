@@ -9,6 +9,8 @@ fallback.
 
 [Open this repository in HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=trankhanhduy2929-beep&repository=rangdong-homeassistant&category=integration)
 
+[Add this repository to the Home Assistant App store](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Ftrankhanhduy2929-beep%2Frangdong-homeassistant)
+
 ## Features
 
 - UDP LAN discovery of Tuya-compatible Rạng Đông Wi-Fi devices.
@@ -22,6 +24,10 @@ fallback.
 - One-time import from TinyTuya, Tuya API and common LocalTuya JSON exports.
 - Authenticated Android bridge for one-time local helper uploads and automatic
   Device ID listing in the setup flow.
+- Experimental **Rạng Đông Key Helper** Home Assistant app with administrator
+  Ingress, Android Wireless ADB pairing, verified Frida setup and optional
+  one-time Rạng Đông phone/password login through the SDK inside the original
+  Android app.
 - Reuse of a `local_key` already present in a working Rạng Đông QR/cloud entry.
 - A switch entity for each boolean DP and a diagnostic LAN status sensor with
   the current DP snapshot.
@@ -48,6 +54,37 @@ repository.
 4. Download **Rạng Đông Smart** and restart Home Assistant.
 5. Open **Settings → Devices & services → Add integration** and select
    **Rạng Đông Smart**.
+
+HACS installs the custom integration only. The rooted-Android key helper is a
+Home Assistant **App** (formerly add-on) and must be installed separately from
+the App store as described below.
+
+## Android key-helper app
+
+The same GitHub repository is also a Home Assistant App repository:
+
+1. Use the **Add this repository to the Home Assistant App store** link above,
+   or open **Settings → Apps → App store → Repositories** and add
+   `https://github.com/trankhanhduy2929-beep/rangdong-homeassistant`.
+2. Install **Rạng Đông Key Helper** and start it manually.
+3. Open its Web UI. Pair Android Wireless debugging if this Home Assistant has
+   not paired with the phone before.
+4. Enter the separate ADB connection port shown on Android's main Wireless
+   debugging screen.
+5. Either sign in from the helper or sign in with the official app first, then
+   scan its current session.
+6. Return to **Add integration → Rạng Đông Smart → Local LAN → Android bridge**
+   and select the imported Device ID.
+
+The phone must be rooted and must grant root to the ADB shell. The APK is not
+debuggable and sets `allowBackup=false`, so normal Wireless ADB on an unrooted
+phone cannot attach to the app process or read its private SDK objects.
+
+The helper does not implement or imitate the Rạng Đông/Tuya private login
+protocol on Linux. Its login form invokes the official ThingClips SDK inside
+the installed `com.rd.smart` process. Account and password values are not saved
+to app options, files, logs or GitHub; they exist temporarily in memory during
+the request. Complete documentation is in `rangdong_key_helper/DOCS.md`.
 
 ## Local setup
 
@@ -126,10 +163,12 @@ phone, keep the extracted key private, and never commit it to this repository.
 
 ### Android bridge (one-time local import)
 
-The custom component cannot read another Android application's private storage
-by itself. To avoid a Tuya IoT Cloud project, use a helper on the phone you
-control to export records from the already logged-in Rạng Đông app, then send
-that export to the authenticated Home Assistant endpoint:
+The recommended helper is the administrator-only Home Assistant App described
+above. It automatically invokes the logged-in Android SDK, validates 16-byte
+keys and POSTs them through Supervisor to this authenticated endpoint. Only
+masked values are shown in its UI.
+
+Advanced users can still send a trusted export manually:
 
 ```sh
 curl -X POST \
@@ -159,8 +198,9 @@ curl -X DELETE \
 
 Use HTTPS or a trusted LAN when uploading an export. Never put the Rạng Đông
 password, a Home Assistant token or a raw local key in a public issue or
-repository. This bridge is an import channel; it does not pretend that a
-username/password alone can bypass the OEM app's mobile API identity checks.
+repository. The helper's login support still requires the original Android app
+on a rooted phone; a username/password alone cannot bypass the OEM app's mobile
+API identity checks.
 
 The LAN scanner itself cannot derive the key from the broadcast packet. Without
 a matching local key, the integration can identify the device but cannot decrypt
@@ -250,11 +290,14 @@ Devices & services**.
 ## Development
 
 The installable component is under `custom_components/rangdong_smart`.
-Validation commands used by the project are:
+The Home Assistant App is under `rangdong_key_helper`. Validation commands used
+by the project are:
 
 ```sh
-ruff check custom_components/rangdong_smart tests
-PYTHONPATH=custom_components pytest -q
+ruff check custom_components/rangdong_smart tests \
+  rangdong_key_helper/rootfs/app/rangdong_helper rangdong_key_helper/tests
+PYTHONPATH=custom_components:rangdong_key_helper/rootfs/app pytest -q
+cd rangdong_key_helper/agent && npm ci && npm run build
 ```
 
 The repository intentionally contains no real account credentials, local
@@ -262,5 +305,8 @@ keys, cloud tokens or APK application secrets.
 
 ## License
 
-The integration code is released under the MIT License. Rạng Đông, ThingClips,
-Tuya and related product names are trademarks of their respective owners.
+Project-authored code is released under the MIT License. The key-helper image
+and compiled agent include Frida components under their upstream licenses; see
+`rangdong_key_helper/THIRD_PARTY_NOTICES.md` and
+`rangdong_key_helper/LICENSE.frida.txt`. Rạng Đông, ThingClips, Tuya and related
+product names are trademarks of their respective owners.

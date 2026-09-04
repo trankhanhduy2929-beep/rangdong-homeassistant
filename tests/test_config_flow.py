@@ -143,6 +143,7 @@ class ConfigFlowTests(unittest.TestCase):
 
     def test_user_step_defaults_to_local_connection(self) -> None:
         flow = RangDongConfigFlow()
+        flow.hass = FakeHass()
         flow.context = {"source": "user"}
 
         result = asyncio.run(flow.async_step_user())
@@ -151,6 +152,7 @@ class ConfigFlowTests(unittest.TestCase):
         field = next(iter(result["data_schema"].schema))
         self.assertEqual(field.schema, "connection_type")
         self.assertEqual(field.default(), "local")
+        self.assertEqual(len(flow.hass.http.views), 1)
 
     def test_local_scan_prefills_discovered_device(self) -> None:
         flow = RangDongConfigFlow()
