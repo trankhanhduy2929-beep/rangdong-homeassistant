@@ -1,18 +1,46 @@
 {
   "config": {
     "abort": {
-      "reauth_successful": "Re-authentication was successful"
+      "reauth_successful": "Re-authentication was successful",
+      "reconfigure_successful": "The local configuration was updated successfully"
     },
     "error": {
+      "cannot_connect_local": "The device was found, but Home Assistant could not read it over the LAN. Check that the device and Home Assistant are on the same network and that TCP port 6668 is reachable.",
       "designated_app_error": "Rạng Đông/Tuya rejected QR authorization ({code}) because the scanner is not an approved designated app. Start a fresh flow and scan promptly with the scanner inside Rạng Đông Smart. If it fails repeatedly, the OEM must enable Home Assistant authorization; changing the QR prefix cannot bypass this backend restriction. Details: {msg}",
+      "invalid_local_host": "Enter a private IPv4 address for the device.",
+      "invalid_local_key": "The local key or protocol version was rejected. Check the 16-character key and try Auto protocol.",
+      "local_scan_failed": "LAN scan could not complete. You can enter the device IP and ID manually.",
+      "local_setup_error": "The local device could not be configured. Check the IP, device ID, local key and protocol version.",
       "login_error": "Authorization error ({code}): {msg}"
     },
     "step": {
       "user": {
         "data": {
+          "connection_type": "Connection mode"
+        },
+        "description": "Choose Local LAN to avoid QR authorization. Local mode does not send commands through the cloud. Use Legacy cloud QR only for an existing QR setup."
+      },
+      "cloud_qr": {
+        "data": {
           "user_code": "User Code"
         },
         "description": "Enter the case-sensitive User Code from Rạng Đông Smart → Settings → Account and Security → User Code. This integration never asks for your account password."
+      },
+      "local_scan": {
+        "data": {
+          "discovered_device": "Discovered LAN device"
+        },
+        "description": "Keep the Rạng Đông device powered on and on the same LAN as Home Assistant. The scan uses Tuya UDP discovery ports 6666, 6667 and 7000. If nothing appears, choose Enter manually."
+      },
+      "local_device": {
+        "data": {
+          "name": "Device name",
+          "host": "Device IP address",
+          "device_id": "Device ID",
+          "local_key": "Local key",
+          "protocol_version": "Protocol version"
+        },
+        "description": "Enter the device's 16-character local key. It is not the Rạng Đông account password and cannot be learned from a LAN scan. Auto tries Tuya protocols 3.5 through 3.1 and verifies the connection before saving."
       },
       "scan": {
         "data": {
@@ -25,6 +53,44 @@
           "user_code": "User Code"
         },
         "description": "Enter the current case-sensitive User Code from Rạng Đông Smart. The password is not required."
+      },
+      "reauth_local": {
+        "data": {
+          "name": "Device name",
+          "host": "Device IP address",
+          "device_id": "Device ID",
+          "local_key": "Local key",
+          "protocol_version": "Protocol version"
+        },
+        "description": "Enter the current local key to revalidate this LAN device. The key stays in Home Assistant's private config storage and is never included in diagnostics."
+      },
+      "reconfigure_local": {
+        "data": {
+          "name": "Device name",
+          "host": "Device IP address",
+          "device_id": "Device ID",
+          "local_key": "Local key",
+          "protocol_version": "Protocol version"
+        },
+        "description": "Update the IP address or local key, then verify direct LAN access before reloading the entry."
+      }
+    }
+  },
+  "selector": {
+    "connection_type": {
+      "options": {
+        "cloud_qr": "Legacy cloud QR",
+        "local": "Local LAN (recommended)"
+      }
+    },
+    "protocol_version": {
+      "options": {
+        "3.1": "3.1",
+        "3.2": "3.2",
+        "3.3": "3.3",
+        "3.4": "3.4",
+        "3.5": "3.5",
+        "auto": "Auto (recommended)"
       }
     }
   }

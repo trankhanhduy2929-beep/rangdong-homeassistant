@@ -1,6 +1,6 @@
 send_command:
   name: Send raw DP command
-  description: Send one Tuya data-point command to a device returned by the cloud API.
+  description: Send one Tuya data-point command over the configured local or legacy cloud connection.
   fields:
     device_id:
       name: Device ID
@@ -11,11 +11,21 @@ send_command:
         text:
     code:
       name: DP code
-      description: Tuya data-point code, for example switch_led or bright_value.
-      required: true
+      description: Legacy cloud DP code. For local devices use numeric dp_id instead.
+      required: false
       example: switch_led
       selector:
         text:
+    dp_id:
+      name: Local DP ID
+      description: Numeric Tuya data-point ID shown in the LAN status sensor attributes.
+      required: false
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 255
+          mode: box
     value:
       name: Value
       description: Boolean, number, string, object or list accepted by the device DP.

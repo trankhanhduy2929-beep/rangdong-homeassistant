@@ -7,6 +7,7 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from . import RangDongLocalRuntimeData
 from .const import DOMAIN, REDACTED
 
 SENSITIVE_KEY_MARKERS = (
@@ -71,6 +72,19 @@ async def async_get_config_entry_diagnostics(
 
     del hass
     runtime = entry.runtime_data
+    if isinstance(runtime, RangDongLocalRuntimeData):
+        return {
+            "domain": DOMAIN,
+            "connection_type": "local",
+            "device_id": _mask(runtime.client.device_id),
+            "host": _mask(runtime.client.host),
+            "protocol_version": runtime.client.protocol_version,
+            "product_id": runtime.product_id,
+            "connected": runtime.coordinator.last_update_success,
+            "dps": _safe_value(runtime.coordinator.data or {}),
+            "local_key": REDACTED,
+        }
+
     manager = runtime.manager
     mqtt_client = manager.mq.client if manager.mq else None
     return {

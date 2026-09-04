@@ -11,9 +11,12 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from tuya_sharing import CustomerDevice, Manager
 
+from . import RangDongLocalRuntimeData
 from .const import DOMAIN, SIGNAL_DISCOVERY_NEW, SIGNAL_UPDATE_PREFIX
+from .coordinator import RangDongLocalCoordinator
 
 SENSITIVE_KEY_MARKERS = (
     "address",
@@ -64,9 +67,22 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Create one generic status sensor per cloud device."""
+    """Create local or legacy cloud status sensors."""
 
-    manager: Manager = entry.runtime_data.manager
+    runtime = entry.runtime_data
+    if isinstance(runtime, RangDongLocalRuntimeData):
+        entities: list[SensorEntity] = [RangDongLocalStatusSensor(runtime)]
+        entities.extend(
+            RangDongLocalDpsSensor(runtime, dp_id)
+            for dp_id, value in sorted(
+                (runtime.coordinator.data or {}).items(), key=_dp_sort_key
+            )
+            if _is_sensor_value(value)
+        )
+        async_add_entities(entities)
+        return
+
+    manager: Manager = runtime.manager
     known_ids: set[str] = set()
 
     @callback
@@ -87,6 +103,94 @@ async def async_setup_entry(
     entry.async_on_unload(
         async_dispatcher_connect(hass, SIGNAL_DISCOVERY_NEW, async_discover_devices)
     )
+
+
+class RangDongLocalStatusSensor(
+    CoordinatorEntity[RangDongLocalCoordinator], SensorEntity
+):
+    """Expose the LAN connection and raw data-point snapshot."""
+
+    _attr_has_entity_name = True
+    _attr_should_poll = False
+    _attr_name = "LAN status"
+    _attr_icon = "mdi:lan-connect"
+
+    def __init__(self, runtime: RangDongLocalRuntimeData) -> None:
+        super().__init__(runtime.coordinator)
+        self.runtime = runtime
+        self._attr_unique_id = f"{DOMAIN}.{runtime.client.device_id}.local_status"
+
+    @property
+    def native_value(self) -> str:
+        return "connected" if self.coordinator.last_update_success else "disconnected"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.runtime.client.device_id)},
+            manufacturer="Rạng Đông / Tuya",
+            name=self.runtime.name,
+            model=self.runtime.product_id
+            or f"Tuya LAN {self.runtime.client.protocol_version}",
+            model_id=self.runtime.product_id,
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "device_id": self.runtime.client.device_id,
+            "host": self.runtime.client.host,
+            "protocol_version": self.runtime.client.protocol_version,
+            "product_id": self.runtime.product_id,
+            "dps": _redact_value(self.coordinator.data or {}),
+        }
+
+
+class RangDongLocalDpsSensor(
+    CoordinatorEntity[RangDongLocalCoordinator], SensorEntity
+):
+    """Expose one scalar local data point as a sensor."""
+
+    _attr_has_entity_name = True
+    _attr_should_poll = False
+
+    def __init__(self, runtime: RangDongLocalRuntimeData, dp_id: str) -> None:
+        super().__init__(runtime.coordinator)
+        self.runtime = runtime
+        self.dp_id = str(dp_id)
+        self._attr_unique_id = (
+            f"{DOMAIN}.{runtime.client.device_id}.sensor_dp_{self.dp_id}"
+        )
+        self._attr_name = f"DP {self.dp_id}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, runtime.client.device_id)},
+            manufacturer="Rạng Đông / Tuya",
+            name=runtime.name,
+            model=runtime.product_id
+            or f"Tuya LAN {runtime.client.protocol_version}",
+            model_id=runtime.product_id,
+        )
+
+    @property
+    def native_value(self) -> str | int | float | None:
+        value = (self.coordinator.data or {}).get(self.dp_id)
+        return value if _is_sensor_value(value) else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str]:
+        return {"dp_id": self.dp_id}
+
+
+def _is_sensor_value(value: Any) -> bool:
+    return not isinstance(value, bool) and isinstance(value, (str, int, float))
+
+
+def _dp_sort_key(item: tuple[str, Any]) -> tuple[int, str]:
+    dp_id = str(item[0])
+    try:
+        return int(dp_id), dp_id
+    except ValueError:
+        return 999999, dp_id
 
 
 class RangDongDeviceSummarySensor(SensorEntity):

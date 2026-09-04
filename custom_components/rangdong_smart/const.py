@@ -1,11 +1,25 @@
-"""Constants for the Rạng Đông Smart diagnostic integration."""
+"""Constants for the Rạng Đông Smart integration."""
 
 from __future__ import annotations
 
 from homeassistant.const import Platform
 
 DOMAIN = "rangdong_smart"
-PLATFORMS = [Platform.SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
+
+CONF_CONNECTION_TYPE = "connection_type"
+CONF_DISCOVERED_DEVICE = "discovered_device"
+CONF_LOCAL_KEY = "local_key"
+CONF_PRODUCT_ID = "product_id"
+CONF_PROTOCOL_VERSION = "protocol_version"
+
+CONNECTION_LOCAL = "local"
+CONNECTION_CLOUD_QR = "cloud_qr"
+
+DISCOVERY_MANUAL = "__manual__"
+DEFAULT_PROTOCOL_VERSION = "auto"
+DEFAULT_SCAN_INTERVAL_SECONDS = 10
+PROTOCOL_VERSIONS = ("auto", "3.1", "3.2", "3.3", "3.4", "3.5")
 
 CONF_ENDPOINT = "endpoint"
 CONF_TERMINAL_ID = "terminal_id"

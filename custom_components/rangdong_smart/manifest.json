@@ -1,12 +1,14 @@
 {
   "domain": "rangdong_smart",
-  "name": "Rạng Đông Smart (Tuya QR)",
+  "name": "Rạng Đông Smart",
+  "after_dependencies": ["network"],
   "codeowners": ["@trankhanhduy2929-beep"],
   "config_flow": true,
   "dependencies": ["tuya"],
   "documentation": "https://github.com/trankhanhduy2929-beep/rangdong-homeassistant",
   "integration_type": "hub",
-  "iot_class": "cloud_push",
+  "iot_class": "local_polling",
   "issue_tracker": "https://github.com/trankhanhduy2929-beep/rangdong-homeassistant/issues",
-  "version": "0.1.2"
+  "requirements": ["tinytuya==1.20.0"],
+  "version": "0.2.0"
 }

@@ -1,76 +1,131 @@
 # Rạng Đông Smart for Home Assistant
 
-Custom HACS integration for **Rạng Đông Smart** devices using the
-ThingClips/Tuya cloud authorization flow. It uses a case-sensitive **User Code
-and QR approval** and never asks Home Assistant users to enter their phone
-number or account password.
+Custom HACS integration for **Rạng Đông Smart** devices that supports direct
+Tuya LAN control and keeps the previous QR authorization flow as an optional
+fallback.
 
-> Experimental fallback integration: use Home Assistant's built-in **Tuya**
-> integration first when it already exposes the required device entities.
+> Local mode is the recommended path when the Rạng Đông app shows
+> “please use the designated app to scan the code to log in”.
 
 [Open this repository in HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=trankhanhduy2929-beep&repository=rangdong-homeassistant&category=integration)
 
 ## Features
 
-- QR/User Code authorization with token refresh handled by the Tuya sharing SDK.
-- Cloud-push device updates through the SDK-managed MQTT connection.
-- One generic cloud-status sensor for each discovered device.
-- Redacted DP/status attributes for diagnosing unsupported models.
-- `rangdong_smart.send_command` for a manually specified Tuya data point.
-- Redacted Home Assistant diagnostics.
+- UDP LAN discovery of Tuya-compatible Rạng Đông Wi-Fi devices.
+- Automatic detection of the device IP, device ID, product ID and protocol
+  version where the device announces them.
+- Direct TCP control on port `6668`; no cloud or MQTT connection is used in
+  Local LAN mode.
+- Automatic protocol probing for Tuya `3.5` through `3.1`.
+- A switch entity for each boolean DP and a diagnostic LAN status sensor with
+  the current DP snapshot.
+- `rangdong_smart.send_command` for numeric local DPs and legacy cloud DPs.
+- Existing QR entries continue to work and can still be selected explicitly.
 
-The integration does not implement direct local LAN or BLE control and does not
-yet create model-specific light, switch, climate, or cover entities.
-It declares Home Assistant's built-in Tuya integration as a dependency, so
-Home Assistant supplies the matching SDK version instead of letting two
-integrations compete over different SDK versions.
+## Important limitation
+
+LAN discovery does **not** reveal the device's `local_key`. The key is a
+per-device credential and is required by the encrypted Tuya local protocol.
+The setup flow therefore scans for the IP/ID first, then asks for the local
+key and verifies it before creating the entry.
+
+Do not use the Rạng Đông account password as the local key. Never put a local
+key, account password, token or APK secret in an issue, public log or GitHub
+repository.
 
 ## HACS installation
 
 1. Install and open HACS in Home Assistant.
-2. Use the link above, or open **HACS → Integrations → ⋮ → Custom repositories**.
-3. Add `trankhanhduy2929-beep/rangdong-homeassistant` and choose **Integration**.
-4. Download **Rạng Đông Smart (Tuya QR)** and restart Home Assistant.
-5. Open **Settings → Devices & services → Add integration** and choose
-   **Rạng Đông Smart (Tuya QR)**.
+2. Open **HACS → Integrations → ⋮ → Custom repositories**.
+3. Add `trankhanhduy2929-beep/rangdong-homeassistant` and select **Integration**.
+4. Download **Rạng Đông Smart** and restart Home Assistant.
+5. Open **Settings → Devices & services → Add integration** and select
+   **Rạng Đông Smart**.
 
-The repository is intended to be installed as a custom repository until it is
-accepted into the default HACS catalog.
+## Local setup
 
-## Authorization
+1. Select **Local LAN (recommended)**.
+2. Keep the Rạng Đông Wi-Fi device powered on and on the same LAN as Home
+   Assistant.
+3. Select the device found by the scan. If the list is empty, choose
+   **Enter manually** and enter its IP address and device ID.
+4. Enter the device's 16-character `local_key`.
+5. Leave **Auto** selected for protocol version unless the device requires a
+   known version. The flow reads the device before saving the configuration.
 
-1. In Rạng Đông Smart, open **Settings → Account and Security → User Code**.
-2. Enter the code in the Home Assistant config flow; preserve capitalization.
-3. Open the QR scanner inside Rạng Đông Smart, scan the QR code shown by Home
-   Assistant, and approve the authorization.
-4. Return to Home Assistant and finish the flow.
+The flow creates one config entry per device. Run **Add integration** again
+for each additional Wi-Fi device.
 
-Never put an account password, access token, refresh token, local key, or QR
-token in this repository, an issue, or a public log.
+### Where to obtain the local key
 
-### Designated-app error
+The official app normally does not display this key. Supported ways to obtain
+it include:
 
-If Rạng Đông Smart displays **“please use the designated app to scan the code
-to log in”** and Home Assistant reports `E0020003`, the QR format is not the
-problem. This response indicates that the Tuya/OEM backend has rejected the
-mobile-app and account combination. The integration intentionally keeps the
-standard `tuyaSmart--qrLogin` payload used by the ThingClips scanner; changing
-the prefix to `rangdongsmart--` or `thingSmart--` does not bypass the server
-authorization policy.
+- an authorized Tuya/Rạng Đông device export or local integration already
+  containing the key;
+- the Tuya developer/cloud device details for an account you control; or
+- a private, consent-based extraction from your own logged-in Android device.
 
-Try these steps:
+APK analysis confirms that the logged-in Android SDK keeps the key in its
+private device cache and exposes it to the app as `DeviceBean.localKey`. Reading
+that private cache normally requires a rooted/debuggable test device or a
+runtime inspection tool such as Frida. Do this only on your own account and
+phone, keep the extracted key private, and never commit it to this repository.
 
-1. Update Home Assistant and Rạng Đông Smart, then start a new flow and scan
-   the newly generated QR immediately.
-2. Use the scanner inside the app, not the phone's general camera or a third-
-   party QR reader.
-3. After a failed scan, press **Continue** once. Version `0.1.2` requests a
-   fresh token and only displays the replacement QR when that request succeeds.
-4. If the account and devices are also available in the official Tuya Smart
-   or Smart Life app, try Home Assistant's built-in **Tuya** integration.
-5. If the branded Rạng Đông app still rejects repeated fresh codes, request OEM Home
-   Assistant authorization from Rạng Đông/Tuya; a custom component cannot
-   safely bypass that server-side restriction.
+The LAN scanner itself cannot derive the key from the broadcast packet. Without
+a matching local key, the integration can identify the device but cannot decrypt
+status packets or send local commands.
+
+## Network requirements
+
+- Home Assistant and the device must be on the same IPv4 LAN/VLAN.
+- Allow UDP discovery ports `6666`, `6667` and `7000`.
+- Allow TCP device control port `6668`.
+- Docker installations may need host networking so broadcast packets reach the
+  physical LAN. For Home Assistant Container, use `network_mode: host` or an
+  equivalent network design that forwards these ports.
+- Guest Wi-Fi isolation, client isolation and routed VLANs commonly prevent
+  discovery or control.
+
+## Wi-Fi versus Zigbee devices
+
+This local flow controls Tuya-compatible **Wi-Fi** devices. A Zigbee lamp or
+sensor usually appears only behind its gateway and will not expose a usable
+Wi-Fi local key. For Zigbee devices, pair the device with ZHA or Zigbee2MQTT,
+or configure the gateway through a supported cloud/local integration.
+
+## Raw DP command
+
+Local devices use numeric DP IDs. The LAN status sensor shows the current DP
+map in its attributes. Example for a power DP:
+
+```yaml
+action: rangdong_smart.send_command
+data:
+  device_id: "device-id-from-the-LAN-status-sensor"
+  dp_id: 1
+  value: true
+```
+
+Legacy QR/cloud entries continue to accept a named DP code:
+
+```yaml
+action: rangdong_smart.send_command
+data:
+  device_id: "device-id-from-the-cloud-status-sensor"
+  code: switch_led
+  value: true
+```
+
+Only send values supported by the device. An invalid DP type can be rejected
+by the device.
+
+## QR fallback
+
+Selecting **Legacy cloud QR** keeps the previous User Code and QR flow. If the
+Rạng Đông app repeatedly reports a designated-app error such as `E0020003`,
+that is a server-side authorization restriction; changing the QR prefix does
+not bypass it. Use Local LAN mode instead when a local key is available.
 
 ## Manual installation
 
@@ -80,70 +135,37 @@ Copy `custom_components/rangdong_smart` into:
 <config>/custom_components/rangdong_smart
 ```
 
-Restart Home Assistant and add the integration from **Settings → Devices &
-services**.
-
-## Sending a raw DP command
-
-Use the service only when the device DP code and value type are known:
-
-```yaml
-action: rangdong_smart.send_command
-data:
-  device_id: "device-id-from-summary-sensor"
-  code: switch_led
-  value: true
-```
-
-An invalid DP command can make a device reject the request. Prefer the built-in
-Tuya integration's model-specific entities for everyday control.
-
-## Releases
-
-The installable integration lives under `custom_components/rangdong_smart`.
-HACS installs that source directory from the repository. Pushing a tag such as
-`v0.1.2` also runs the release workflow and attaches a clean
-`rangdong_smart-v0.1.2.zip` archive for manual downloads. The ZIP is generated
-at release time and is intentionally not committed to the source tree.
-
-For a new release, update the integration version in
-`custom_components/rangdong_smart/manifest.json`, commit it, and push a tag
-with the same version, for example:
-
-```sh
-git tag -a v0.1.2 -m "Release v0.1.2"
-git push origin main v0.1.2
-```
-
-The release workflow reruns Hassfest and HACS validation, then checks that the
-tag and manifest versions match before it publishes the release.
-
-## Repository owner checklist
-
-Before requesting inclusion in the default HACS catalog, keep the repository
-public, enable Issues, set a short GitHub description, and add useful topics
-such as `home-assistant`, `hacs`, `custom-component`, `rang-dong`, and `tuya`.
-The HACS and Home Assistant validation workflows must pass, and a published
-GitHub Release should exist.
+Restart Home Assistant, then add **Rạng Đông Smart** from **Settings →
+Devices & services**.
 
 ## Troubleshooting
 
-- If QR authorization expires, restart the config flow and generate a new QR.
-- If the app reports the designated-app message, follow the steps in
-  **Designated-app error**; changing the QR prefix will not fix a backend
-  restriction.
-- If a newly added device is missing, reload the integration or restart Home
-  Assistant.
-- If diagnostics are requested, use Home Assistant's **Download diagnostics**;
-  do not share raw config-entry data.
+- **No devices found:** verify host networking, same subnet, broadcast rules,
+  and that the device is awake; try manual IP/ID entry.
+- **Cannot connect:** check TCP `6668`, firewall rules and Wi-Fi client
+  isolation.
+- **Invalid local key:** confirm the key belongs to that exact device; leave
+  protocol on Auto and retry.
+- **Device is Zigbee:** use ZHA/Zigbee2MQTT or the gateway integration; the
+  Wi-Fi scan cannot pair a Zigbee child directly.
+- **IP changed:** open the integration entry and choose **Reconfigure**, then
+  enter the new address and local key. A DHCP reservation is recommended for
+  stable operation.
 
-## Status
+## Development
 
-Static checks, import smoke tests, and helper tests pass with Home Assistant
-2026.8.3, Python 3.14, and `tuya-device-sharing-sdk` 0.2.14. Real account and
-physical-device testing is still required for a production claim.
+The installable component is under `custom_components/rangdong_smart`.
+Validation commands used by the project are:
+
+```sh
+ruff check custom_components/rangdong_smart tests
+PYTHONPATH=custom_components pytest -q
+```
+
+The repository intentionally contains no real account credentials, local
+keys, cloud tokens or APK application secrets.
 
 ## License
 
 The integration code is released under the MIT License. Rạng Đông, ThingClips,
-Tuya, and related product names are trademarks of their respective owners.
+Tuya and related product names are trademarks of their respective owners.

@@ -1,18 +1,46 @@
 {
   "config": {
     "abort": {
-      "reauth_successful": "Xác thực lại thành công"
+      "reauth_successful": "Xác thực lại thành công",
+      "reconfigure_successful": "Đã cập nhật cấu hình local thành công"
     },
     "error": {
+      "cannot_connect_local": "Đã tìm thấy thiết bị nhưng Home Assistant không đọc được qua LAN. Kiểm tra thiết bị và Home Assistant cùng mạng, đồng thời TCP cổng 6668 không bị chặn.",
       "designated_app_error": "Rạng Đông/Tuya từ chối ủy quyền QR ({code}) vì app quét không nằm trong danh sách ứng dụng được chỉ định. Hãy tạo luồng mới và quét ngay bằng chức năng Scan trong Rạng Đông Smart. Nếu lỗi lặp lại, phía OEM phải bật quyền Home Assistant; đổi prefix QR không thể vượt qua giới hạn backend này. Chi tiết: {msg}",
+      "invalid_local_host": "Hãy nhập địa chỉ IPv4 riêng của thiết bị.",
+      "invalid_local_key": "Thiết bị từ chối local key hoặc phiên bản giao thức. Kiểm tra khóa 16 ký tự và thử giao thức Tự động.",
+      "local_scan_failed": "Không quét LAN được. Anh có thể nhập thủ công IP và Device ID.",
+      "local_setup_error": "Không cấu hình được thiết bị local. Kiểm tra IP, Device ID, local key và phiên bản giao thức.",
       "login_error": "Lỗi ủy quyền ({code}): {msg}"
     },
     "step": {
       "user": {
         "data": {
+          "connection_type": "Chế độ kết nối"
+        },
+        "description": "Chọn Local LAN để không cần ủy quyền QR. Chế độ local không gửi lệnh qua cloud. Chỉ chọn QR cloud cũ nếu anh muốn dùng cấu hình QR hiện tại."
+      },
+      "cloud_qr": {
+        "data": {
           "user_code": "User Code"
         },
         "description": "Nhập User Code phân biệt hoa/thường trong Rạng Đông Smart → Cài đặt → Tài khoản và bảo mật → User Code. Tích hợp này không yêu cầu mật khẩu tài khoản."
+      },
+      "local_scan": {
+        "data": {
+          "discovered_device": "Thiết bị LAN tìm thấy"
+        },
+        "description": "Bật thiết bị Rạng Đông và kết nối cùng LAN với Home Assistant. Việc quét dùng UDP 6666, 6667 và 7000. Nếu không thấy, chọn Nhập thủ công."
+      },
+      "local_device": {
+        "data": {
+          "name": "Tên thiết bị",
+          "host": "Địa chỉ IP thiết bị",
+          "device_id": "Device ID",
+          "local_key": "Local key",
+          "protocol_version": "Phiên bản giao thức"
+        },
+        "description": "Nhập local key 16 ký tự của thiết bị. Đây không phải mật khẩu tài khoản Rạng Đông và không thể lấy được chỉ bằng quét LAN. Chế độ Tự động thử giao thức Tuya 3.5 đến 3.1 rồi kiểm tra kết nối trước khi lưu."
       },
       "scan": {
         "data": {
@@ -25,6 +53,44 @@
           "user_code": "User Code"
         },
         "description": "Nhập User Code hiện tại, phân biệt hoa/thường. Không cần nhập mật khẩu."
+      },
+      "reauth_local": {
+        "data": {
+          "name": "Tên thiết bị",
+          "host": "Địa chỉ IP thiết bị",
+          "device_id": "Device ID",
+          "local_key": "Local key",
+          "protocol_version": "Phiên bản giao thức"
+        },
+        "description": "Nhập local key hiện tại để kiểm tra lại thiết bị LAN. Khóa được lưu trong config entry của Home Assistant và không xuất hiện trong diagnostics."
+      },
+      "reconfigure_local": {
+        "data": {
+          "name": "Tên thiết bị",
+          "host": "Địa chỉ IP thiết bị",
+          "device_id": "Device ID",
+          "local_key": "Local key",
+          "protocol_version": "Phiên bản giao thức"
+        },
+        "description": "Cập nhật địa chỉ IP hoặc local key rồi kiểm tra kết nối LAN trước khi tải lại entry."
+      }
+    }
+  },
+  "selector": {
+    "connection_type": {
+      "options": {
+        "cloud_qr": "QR cloud cũ",
+        "local": "LAN nội bộ (khuyên dùng)"
+      }
+    },
+    "protocol_version": {
+      "options": {
+        "3.1": "3.1",
+        "3.2": "3.2",
+        "3.3": "3.3",
+        "3.4": "3.4",
+        "3.5": "3.5",
+        "auto": "Tự động (khuyên dùng)"
       }
     }
   }
