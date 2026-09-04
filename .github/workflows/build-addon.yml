@@ -29,12 +29,12 @@ jobs:
     outputs:
       architectures: ${{ steps.info.outputs.architectures }}
       build_matrix: ${{ steps.matrix.outputs.matrix }}
-      description: ${{ steps.info.outputs.description }}
+      description: ${{ steps.normalize.outputs.description }}
       image_name: ${{ steps.normalize.outputs.image_name }}
-      name: ${{ steps.info.outputs.name }}
+      name: ${{ steps.normalize.outputs.name }}
       registry_prefix: ${{ steps.normalize.outputs.registry_prefix }}
-      url: ${{ steps.info.outputs.url }}
-      version: ${{ steps.info.outputs.version }}
+      url: ${{ steps.normalize.outputs.url }}
+      version: ${{ steps.normalize.outputs.version }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,10 +50,23 @@ jobs:
       - name: Normalize image metadata
         id: normalize
         env:
-          IMAGE: ${{ steps.info.outputs.image }}
+          RAW_DESCRIPTION: ${{ steps.info.outputs.description }}
+          RAW_IMAGE: ${{ steps.info.outputs.image }}
+          RAW_NAME: ${{ steps.info.outputs.name }}
+          RAW_URL: ${{ steps.info.outputs.url }}
+          RAW_VERSION: ${{ steps.info.outputs.version }}
         run: |
-          echo "image_name=${IMAGE##*/}" >> "$GITHUB_OUTPUT"
-          echo "registry_prefix=${IMAGE%/*}" >> "$GITHUB_OUTPUT"
+          description="$(jq -r . <<< "$RAW_DESCRIPTION")"
+          image="$(jq -r . <<< "$RAW_IMAGE")"
+          name="$(jq -r . <<< "$RAW_NAME")"
+          url="$(jq -r . <<< "$RAW_URL")"
+          version="$(jq -r . <<< "$RAW_VERSION")"
+          echo "description=${description}" >> "$GITHUB_OUTPUT"
+          echo "image_name=${image##*/}" >> "$GITHUB_OUTPUT"
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
+          echo "registry_prefix=${image%/*}" >> "$GITHUB_OUTPUT"
+          echo "url=${url}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Prepare multi-architecture matrix
         id: matrix
