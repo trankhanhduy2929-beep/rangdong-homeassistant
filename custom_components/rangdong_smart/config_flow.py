@@ -524,7 +524,6 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                         selector.SelectSelectorConfig(
                             options=list(PROTOCOL_VERSIONS),
                             mode=selector.SelectSelectorMode.DROPDOWN,
-                            translation_key="protocol_version",
                         )
                     ),
                 }

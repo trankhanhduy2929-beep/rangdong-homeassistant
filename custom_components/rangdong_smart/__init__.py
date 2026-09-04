@@ -49,6 +49,8 @@ from .local import RangDongLocalAuthError, RangDongLocalClient
 LOGGER = logging.getLogger(__package__)
 logging.getLogger("tuya_sharing").setLevel(logging.CRITICAL)
 
+CONFIG_SCHEMA = cv.empty_config_schema
+
 
 @dataclass(slots=True)
 class RangDongCloudRuntimeData:
