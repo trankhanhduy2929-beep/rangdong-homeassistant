@@ -1,16 +1,17 @@
-# Home Assistant App: Rạng Đông Key Helper
+# Ứng dụng Home Assistant: Rạng Đông Key Helper
 
-Import Tuya-compatible `local_key` values from the official Rạng Đông Android
-app on a rooted phone you control. The administrator-only Ingress page can pair
-Wireless ADB, sign in through the SDK inside the original app, scan devices and
-send validated keys to the Rạng Đông Smart integration without a Tuya IoT Cloud
-project.
+Nhập các giá trị `local_key` tương thích Tuya từ ứng dụng Rạng Đông chính
+thức trên điện thoại Android đã root do bạn sở hữu và kiểm soát. Trang Ingress
+chỉ dành cho quản trị viên có thể ghép đôi Wireless ADB, đăng nhập thông qua SDK
+trong ứng dụng gốc, dò thiết bị và gửi key đã kiểm tra đến tích hợp Rạng Đông
+Smart mà không cần tạo Tuya IoT Cloud project.
 
-![Supports aarch64 Architecture][aarch64-shield]
-![Supports amd64 Architecture][amd64-shield]
+![Hỗ trợ kiến trúc aarch64][aarch64-shield]
+![Hỗ trợ kiến trúc amd64][amd64-shield]
 
-The phone must be rooted because the Rạng Đông APK is not debuggable and
-disables Android backup. See `DOCS.md` for pairing, login and import steps.
+Điện thoại bắt buộc phải được root vì APK Rạng Đông không bật chế độ gỡ lỗi và
+vô hiệu hóa Android backup. Xem [hướng dẫn sử dụng](DOCS.md) để biết cách ghép
+đôi, đăng nhập và nhập dữ liệu.
 
 [aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
 [amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg

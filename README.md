@@ -1,174 +1,192 @@
-# Rạng Đông Smart for Home Assistant
+# Rạng Đông Smart cho Home Assistant
 
-Custom HACS integration for **Rạng Đông Smart** devices that supports direct
-Tuya LAN control and keeps the previous QR authorization flow as an optional
-fallback.
+Tích hợp tùy chỉnh cài qua HACS dành cho thiết bị **Rạng Đông Smart**, hỗ trợ
+điều khiển trực tiếp bằng giao thức Tuya trong mạng LAN và vẫn giữ phương thức
+xác thực QR cũ làm lựa chọn dự phòng.
 
-> Local mode is the recommended path when the Rạng Đông app shows
-> “please use the designated app to scan the code to log in”.
+> Nên dùng chế độ **LAN nội bộ** nếu ứng dụng Rạng Đông báo
+> “please use the designated app to scan the code to log in” (hãy dùng ứng
+> dụng được chỉ định để quét mã đăng nhập).
 
-[Open this repository in HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=trankhanhduy2929-beep&repository=rangdong-homeassistant&category=integration)
+[Mở kho này trong HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=trankhanhduy2929-beep&repository=rangdong-homeassistant&category=integration)
 
-[Add this repository to the Home Assistant App store](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Ftrankhanhduy2929-beep%2Frangdong-homeassistant)
+[Thêm kho này vào kho ứng dụng Home Assistant](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Ftrankhanhduy2929-beep%2Frangdong-homeassistant)
 
-## Features
+## Tính năng
 
-- UDP LAN discovery of Tuya-compatible Rạng Đông Wi-Fi devices.
-- Automatic detection of the device IP, device ID, product ID and protocol
-  version where the device announces them.
-- Direct TCP control on port `6668`; no cloud or MQTT connection is used in
-  Local LAN mode.
-- Automatic protocol probing for Tuya `3.5` through `3.1`.
-- One-time `local_key` retrieval from a user-controlled Tuya IoT Cloud
-  project. The project Access ID and Access Secret are not stored.
-- One-time import from TinyTuya, Tuya API and common LocalTuya JSON exports.
-- Authenticated Android bridge for one-time local helper uploads and automatic
-  Device ID listing in the setup flow.
-- Experimental **Rạng Đông Key Helper** Home Assistant app with administrator
-  Ingress, Android Wireless ADB pairing, verified Frida setup and optional
-  one-time Rạng Đông phone/password login through the SDK inside the original
-  Android app.
-- Reuse of a `local_key` already present in a working Rạng Đông QR/cloud entry.
-- A switch entity for each boolean DP and a diagnostic LAN status sensor with
-  the current DP snapshot.
-- `rangdong_smart.send_command` for numeric local DPs and legacy cloud DPs.
-- Existing QR entries continue to work and can still be selected explicitly.
+- Dò thiết bị Wi-Fi Rạng Đông tương thích Tuya bằng gói tin UDP trong LAN.
+- Tự động nhận diện địa chỉ IP, Device ID, Product ID và phiên bản giao thức
+  khi thiết bị có phát các thông tin này.
+- Điều khiển trực tiếp qua TCP cổng `6668`; chế độ LAN nội bộ không dùng cloud
+  hoặc MQTT.
+- Tự động thử giao thức Tuya từ `3.5` đến `3.1`.
+- Lấy `local_key` một lần từ Tuya IoT Cloud project do chính người dùng quản
+  lý. Access ID và Access Secret không được lưu lại.
+- Nhập dữ liệu một lần từ TinyTuya, Tuya API và các định dạng JSON xuất bởi LocalTuya
+  phổ biến.
+- Android bridge có xác thực để nhận dữ liệu từ helper cục bộ và tự động liệt
+  kê Device ID trong luồng cài đặt.
+- Ứng dụng Home Assistant thử nghiệm **Rạng Đông Key Helper**, có Ingress chỉ
+  dành cho quản trị viên, ghép đôi Android Wireless ADB, kiểm tra Frida và tùy
+  chọn đăng nhập một lần bằng số điện thoại/mật khẩu thông qua SDK nằm trong
+  chính ứng dụng Android Rạng Đông.
+- Tái sử dụng `local_key` đã có trong một cấu hình Rạng Đông QR/cloud đang hoạt
+  động.
+- Tạo công tắc cho từng DP kiểu boolean và cảm biến chẩn đoán trạng thái LAN có
+  ảnh chụp dữ liệu DP hiện tại.
+- Dịch vụ `rangdong_smart.send_command` cho DP dạng số ở chế độ local và DP
+  cloud cũ.
+- Các cấu hình QR đã tạo trước đây vẫn tiếp tục hoạt động và có thể được chọn
+  rõ ràng khi cài đặt.
 
-## Important limitation
+## Giới hạn quan trọng
 
-LAN discovery does **not** reveal the device's `local_key`. The key is a
-per-device credential and is required by the encrypted Tuya local protocol.
-The setup flow scans the IP/ID first, then lets you retrieve the key once from
-an authorized source, import a JSON export or enter it manually. The key is
-verified against the LAN device before the entry is created.
+Quét mạng LAN **không thể lấy được** `local_key` của thiết bị. Đây là thông tin
+xác thực riêng cho từng thiết bị và là thành phần bắt buộc của giao thức Tuya
+LAN đã mã hóa. Luồng cài đặt sẽ dò IP/Device ID trước, sau đó cho phép lấy key
+một lần từ nguồn đã được cấp quyền, nhập từ JSON hoặc nhập thủ công. Key luôn
+được kiểm tra trực tiếp với thiết bị trong LAN trước khi tạo cấu hình.
 
-Do not use the Rạng Đông account password as the local key. Never put a local
-key, account password, token or APK secret in an issue, public log or GitHub
-repository.
+Không dùng mật khẩu tài khoản Rạng Đông thay cho local key. Tuyệt đối không đưa
+local key, mật khẩu tài khoản, token hoặc bí mật lấy từ APK vào issue, log công
+khai hay kho GitHub.
 
-## HACS installation
+## Cài đặt qua HACS
 
-1. Install and open HACS in Home Assistant.
-2. Open **HACS → Integrations → ⋮ → Custom repositories**.
-3. Add `trankhanhduy2929-beep/rangdong-homeassistant` and select **Integration**.
-4. Download **Rạng Đông Smart** and restart Home Assistant.
-5. Open **Settings → Devices & services → Add integration** and select
+1. Cài đặt và mở HACS trong Home Assistant.
+2. Mở **HACS → Tích hợp (Integrations) → ⋮ → Kho tùy chỉnh (Custom
+   repositories)**.
+3. Thêm `trankhanhduy2929-beep/rangdong-homeassistant`, sau đó chọn loại
+   **Integration**.
+4. Tải **Rạng Đông Smart** và khởi động lại Home Assistant.
+5. Mở **Cài đặt → Thiết bị & dịch vụ → Thêm tích hợp**, rồi chọn
    **Rạng Đông Smart**.
 
-HACS installs the custom integration only. The rooted-Android key helper is a
-Home Assistant **App** (formerly add-on) and must be installed separately from
-the App store as described below.
+HACS chỉ cài **tích hợp Rạng Đông Smart**. Ứng dụng hỗ trợ lấy key trên Android
+đã root phải được cài riêng từ kho ứng dụng Home Assistant theo phần dưới đây.
 
-## Android key-helper app
+## Cài Rạng Đông Key Helper
 
-The same GitHub repository is also a Home Assistant App repository:
+Kho GitHub này đồng thời là một kho ứng dụng Home Assistant:
 
-1. Use the **Add this repository to the Home Assistant App store** link above,
-   or open **Settings → Apps → App store → Repositories** and add
-   `https://github.com/trankhanhduy2929-beep/rangdong-homeassistant`.
-2. Install **Rạng Đông Key Helper** and start it manually.
-3. Open its Web UI. Pair Android Wireless debugging if this Home Assistant has
-   not paired with the phone before.
-4. Enter the separate ADB connection port shown on Android's main Wireless
-   debugging screen.
-5. Either sign in from the helper or sign in with the official app first, then
-   scan its current session.
-6. Return to **Add integration → Rạng Đông Smart → Local LAN → Android bridge**
-   and select the imported Device ID.
+1. Bấm liên kết **Thêm kho này vào kho ứng dụng Home Assistant** ở đầu trang,
+   hoặc mở **Cài đặt → Ứng dụng (Apps) → Kho ứng dụng (App store) → Kho lưu trữ
+   (Repositories)** rồi thêm:
 
-The phone must be rooted and must grant root to the ADB shell. The APK is not
-debuggable and sets `allowBackup=false`, so normal Wireless ADB on an unrooted
-phone cannot attach to the app process or read its private SDK objects.
+   ```text
+   https://github.com/trankhanhduy2929-beep/rangdong-homeassistant
+   ```
 
-The helper does not implement or imitate the Rạng Đông/Tuya private login
-protocol on Linux. Its login form invokes the official ThingClips SDK inside
-the installed `com.rd.smart` process. Account and password values are not saved
-to app options, files, logs or GitHub; they exist temporarily in memory during
-the request. Complete documentation is in `rangdong_key_helper/DOCS.md`.
+2. Cài **Rạng Đông Key Helper** và khởi động ứng dụng thủ công.
+3. Mở giao diện web của helper. Ghép đôi Android Wireless debugging nếu Home
+   Assistant này chưa từng ghép đôi với điện thoại.
+4. Nhập đúng **cổng kết nối ADB** hiển thị trên màn hình Wireless debugging
+   chính của Android. Cổng này thường khác cổng ghép đôi tạm thời.
+5. Chọn một trong hai cách:
+   - đăng nhập từ helper; hoặc
+   - đăng nhập trước bằng ứng dụng Rạng Đông chính thức, sau đó chọn dò bằng
+     phiên ứng dụng hiện có.
+6. Quay lại **Thêm tích hợp → Rạng Đông Smart → LAN nội bộ → Android bridge**
+   và chọn Device ID đã import.
 
-## Local setup
+Điện thoại **bắt buộc phải được root** và trình quản lý root phải cấp quyền root
+cho ADB shell. APK Rạng Đông không bật chế độ gỡ lỗi và đặt
+`allowBackup=false`, vì vậy Wireless ADB thông thường trên điện thoại chưa root
+không thể gắn vào tiến trình ứng dụng hoặc đọc các đối tượng SDK riêng tư.
 
-1. Select **Local LAN (recommended)**.
-2. Keep the Rạng Đông Wi-Fi device powered on and on the same LAN as Home
+Helper không tự viết lại hoặc giả lập giao thức đăng nhập riêng của
+Rạng Đông/Tuya trên Linux. Biểu mẫu đăng nhập của helper gọi SDK ThingClips
+chính thức ngay bên trong tiến trình `com.rd.smart` đã cài trên điện thoại.
+Tài khoản và mật khẩu không được lưu vào tùy chọn ứng dụng, tệp, log hoặc
+GitHub; chúng chỉ tồn tại tạm thời trong bộ nhớ khi thực hiện yêu cầu.
+
+Nếu tài khoản yêu cầu captcha, mã xác minh hoặc gặp giới hạn “designated app”,
+hãy đăng nhập trực tiếp bằng ứng dụng Rạng Đông chính thức rồi dùng chức năng
+dò bằng phiên ứng dụng hiện có. Xem
+[hướng dẫn chi tiết của Key Helper](rangdong_key_helper/DOCS.md).
+
+## Thiết lập LAN nội bộ
+
+1. Chọn **LAN nội bộ (khuyên dùng)**.
+2. Bật thiết bị Wi-Fi Rạng Đông và bảo đảm thiết bị cùng mạng LAN với Home
    Assistant.
-3. Select the device found by the scan. If the list is empty, choose
-   **Enter manually** and enter its IP address and device ID.
-4. Select a local-key source:
-   - **Android bridge** after a local helper has uploaded the Rạng Đông app
-     records;
-   - **Fetch once from Tuya Cloud** for a linked Tuya IoT developer project;
-   - **Import JSON export** for TinyTuya/LocalTuya/Tuya API data;
-   - **Existing authorized cloud entry** when a working QR entry already has
-     the same device; or
-   - **Enter local key manually**.
-5. Leave **Auto** selected for protocol version unless the device requires a
-   known version. The flow reads the device before saving the configuration.
+3. Chọn thiết bị tìm được. Nếu danh sách trống, chọn **Nhập thủ công**, sau đó
+   nhập địa chỉ IP và Device ID.
+4. Chọn nguồn local key:
+   - **Android bridge** sau khi helper đã gửi dữ liệu thiết bị từ ứng dụng
+     Rạng Đông;
+   - **Lấy một lần từ Tuya Cloud** nếu thiết bị đã liên kết với Tuya IoT Cloud
+     project của bạn;
+   - **Nhập dữ liệu JSON đã xuất** từ TinyTuya, LocalTuya hoặc Tuya API;
+   - **Cloud entry đã xác thực** nếu cấu hình QR đang hoạt động đã có cùng thiết
+     bị; hoặc
+   - **Nhập local key thủ công**.
+5. Giữ **Tự động (Auto)** cho phiên bản giao thức, trừ khi đã biết chính xác
+   thiết bị cần phiên bản nào. Tích hợp sẽ đọc thử thiết bị trước khi lưu.
 
-The flow creates one config entry per device. Run **Add integration** again
-for each additional Wi-Fi device.
+Mỗi thiết bị được tạo thành một mục cấu hình (config entry) riêng. Hãy chạy
+**Thêm tích hợp** lại cho từng thiết bị Wi-Fi khác.
 
-### Where to obtain the local key
+### Lấy local key ở đâu
 
-The official app normally does not display this key. Supported ways to obtain
-it include:
+Ứng dụng chính thức thường không hiển thị local key. Các nguồn được hỗ trợ gồm:
 
-- an authorized Tuya/Rạng Đông device export or local integration already
-  containing the key;
-- the Tuya developer/cloud device details for an account you control; or
-- a private, consent-based extraction from your own logged-in Android device.
+- bản dữ liệu thiết bị Tuya/Rạng Đông đã xuất từ nguồn được cấp quyền hoặc một tích hợp local
+  hiện có đã chứa key;
+- thông tin thiết bị trong Tuya developer/cloud project do bạn quản lý; hoặc
+- trích xuất riêng tư, có sự đồng ý từ điện thoại Android của chính bạn đang
+  đăng nhập tài khoản.
 
-### Automatic one-time Tuya Cloud retrieval
+### Lấy key một lần từ Tuya Cloud
 
-The integration can retrieve keys from a Tuya IoT Cloud project that you
-control:
+Tích hợp có thể lấy local key từ Tuya IoT Cloud project do bạn quản lý:
 
-1. Create or open a cloud project in the Tuya IoT Platform.
-2. Link the Tuya/Rạng Đông app account or the exact device to that project and
-   enable the device-management API permissions needed to list devices.
-3. In the integration, select **Fetch once from Tuya Cloud**.
-4. Enter the project **Access ID**, **Access Secret**, data center and Device
-   ID.
-5. Confirm the LAN address. The integration verifies the key locally and saves
-   only the resulting local device configuration.
+1. Tạo hoặc mở một cloud project trên Tuya IoT Platform.
+2. Liên kết tài khoản ứng dụng Tuya/Rạng Đông hoặc đúng thiết bị cần dùng với
+   project, sau đó bật các quyền API quản lý thiết bị cần thiết.
+3. Trong luồng cài đặt, chọn **Lấy một lần từ Tuya Cloud**.
+4. Nhập **Access ID**, **Access Secret**, trung tâm dữ liệu và Device ID.
+5. Xác nhận địa chỉ LAN. Tích hợp kiểm tra key trực tiếp với thiết bị và chỉ lưu
+   cấu hình local đã hoạt động.
 
-The Access ID, Access Secret and cloud response are not saved in the Home
-Assistant config entry or diagnostics. The project can be disabled after a
-successful import if it is not needed elsewhere.
+Access ID, Access Secret và phản hồi từ cloud không được lưu trong config entry
+hoặc dữ liệu chẩn đoán của Home Assistant. Có thể tắt cloud project sau khi
+nhập thành công nếu không còn dùng ở nơi khác.
 
-Rạng Đông is an OEM app, so some accounts cannot be linked to a normal Tuya
-IoT project. That server-side restriction cannot be bypassed by the
-integration. Use a trusted JSON export or a private extraction from your own
-Android phone when linking is unavailable.
+Rạng Đông là ứng dụng OEM nên một số tài khoản không thể liên kết với Tuya IoT
+project thông thường. Tích hợp không thể vượt qua giới hạn phía máy chủ này.
+Nếu không liên kết được, hãy dùng dữ liệu JSON xuất từ nguồn đáng tin cậy hoặc
+trích xuất riêng tư từ điện thoại Android của chính bạn.
 
-### JSON import
+### Nhập dữ liệu JSON
 
-Select **Import JSON export** and paste trusted data containing a Device ID and
-one of these key fields: `key`, `local_key`, `localKey` or `localkey`. Supported
-layouts include:
+Chọn **Nhập dữ liệu JSON đã xuất** và dán dữ liệu đáng tin cậy có Device ID cùng một
+trong các trường key: `key`, `local_key`, `localKey` hoặc `localkey`. Các định
+dạng được hỗ trợ gồm:
 
-- TinyTuya `devices.json` arrays;
-- Tuya Cloud/mobile API device objects;
-- common LocalTuya exports; and
-- dictionaries keyed by Device ID.
+- mảng `devices.json` của TinyTuya;
+- đối tượng thiết bị từ Tuya Cloud/mobile API;
+- các bản xuất dữ liệu LocalTuya phổ biến; và
+- đối tượng hoặc từ điển dùng Device ID làm khóa.
 
-The JSON is processed in memory once. It is not stored or shown again. If the
-export contains multiple devices, the setup flow shows a key-free device list
-for selection.
+JSON chỉ được xử lý một lần trong bộ nhớ, không được lưu hoặc hiển thị lại. Nếu
+bản dữ liệu có nhiều thiết bị, luồng cài đặt sẽ hiển thị danh sách không chứa key
+để người dùng chọn.
 
-APK analysis confirms that the logged-in Android SDK keeps the key in its
-private device cache and exposes it to the app as `DeviceBean.localKey`. Reading
-that private cache normally requires a rooted/debuggable test device or a
-runtime inspection tool such as Frida. Do this only on your own account and
-phone, keep the extracted key private, and never commit it to this repository.
+Phân tích APK cho thấy SDK Android sau khi đăng nhập lưu key trong bộ nhớ đệm
+thiết bị riêng và cung cấp cho ứng dụng qua `DeviceBean.localKey`. Việc đọc bộ
+nhớ đệm riêng này thường cần điện thoại test đã root/bật gỡ lỗi hoặc công cụ
+kiểm tra lúc chạy như Frida. Chỉ thực hiện trên tài khoản và điện thoại của
+chính bạn, giữ key ở chế độ riêng tư và tuyệt đối không đưa key vào kho này.
 
-### Android bridge (one-time local import)
+### Android bridge: nhập key local một lần
 
-The recommended helper is the administrator-only Home Assistant App described
-above. It automatically invokes the logged-in Android SDK, validates 16-byte
-keys and POSTs them through Supervisor to this authenticated endpoint. Only
-masked values are shown in its UI.
+Nên dùng ứng dụng Home Assistant chỉ dành cho quản trị viên đã mô tả ở trên.
+Ứng dụng tự gọi SDK Android đang đăng nhập, kiểm tra key dài 16 byte và gửi key
+qua Supervisor đến địa chỉ API có xác thực của tích hợp. Giao diện chỉ hiển thị
+giá trị đã che.
 
-Advanced users can still send a trusted export manually:
+Người dùng nâng cao vẫn có thể tự gửi một bản dữ liệu đáng tin cậy:
 
 ```sh
 curl -X POST \
@@ -178,14 +196,14 @@ curl -X POST \
   http://HOME_ASSISTANT:8123/api/rangdong_smart/key-import
 ```
 
-The payload can use `devId`/`deviceId` together with `localKey`, `local_key` or
-`key`, plus optional `name`, `ip`, `productId` and `version`. After the POST,
-choose **Android bridge** in the setup flow and press **Refresh key list**.
-The flow lists Device IDs without displaying the raw key, probes each selected
-device over LAN, and saves only the working local configuration. The bridge
-keeps imported keys in memory only and removes a key after it is consumed.
+Dữ liệu gửi (payload) có thể dùng `devId`/`deviceId` cùng với `localKey`, `local_key` hoặc
+`key`; các trường tùy chọn gồm `name`, `ip`, `productId` và `version`. Sau khi
+POST, chọn **Android bridge** trong luồng cài đặt rồi bấm **Làm mới danh sách
+key**. Luồng cài đặt chỉ liệt kê Device ID, không hiển thị key thô; sau đó kiểm
+tra từng thiết bị đã chọn qua LAN và chỉ lưu cấu hình local hoạt động. Bridge
+chỉ giữ key đã nhập trong bộ nhớ và xóa key sau khi dùng xong.
 
-To inspect only masked metadata or clear the transient registry:
+Để chỉ xem thông tin đã che hoặc xóa toàn bộ danh sách tạm:
 
 ```sh
 curl -H "Authorization: Bearer YOUR_HOME_ASSISTANT_TOKEN" \
@@ -196,102 +214,104 @@ curl -X DELETE \
   http://HOME_ASSISTANT:8123/api/rangdong_smart/key-import
 ```
 
-Use HTTPS or a trusted LAN when uploading an export. Never put the Rạng Đông
-password, a Home Assistant token or a raw local key in a public issue or
-repository. The helper's login support still requires the original Android app
-on a rooted phone; a username/password alone cannot bypass the OEM app's mobile
-API identity checks.
+Chỉ gửi dữ liệu qua HTTPS hoặc một mạng LAN đáng tin cậy. Không đưa mật khẩu
+Rạng Đông, token Home Assistant hay local key thô vào issue hoặc kho công khai.
+Chức năng đăng nhập của helper vẫn cần ứng dụng Android Rạng Đông chính thức
+trên điện thoại đã root; chỉ có tên đăng nhập và mật khẩu không thể vượt qua
+việc kiểm tra danh tính ứng dụng di động của nhà sản xuất.
 
-The LAN scanner itself cannot derive the key from the broadcast packet. Without
-a matching local key, the integration can identify the device but cannot decrypt
-status packets or send local commands.
+Bộ quét LAN không thể suy ra key từ gói tin quảng bá. Khi không có local key
+khớp, tích hợp có thể nhận diện thiết bị nhưng không thể giải mã trạng thái hoặc
+gửi lệnh local.
 
-## Network requirements
+## Yêu cầu mạng
 
-- Home Assistant and the device must be on the same IPv4 LAN/VLAN.
-- Allow UDP discovery ports `6666`, `6667` and `7000`.
-- Allow TCP device control port `6668`.
-- Docker installations may need host networking so broadcast packets reach the
-  physical LAN. For Home Assistant Container, use `network_mode: host` or an
-  equivalent network design that forwards these ports.
-- Guest Wi-Fi isolation, client isolation and routed VLANs commonly prevent
-  discovery or control.
+- Home Assistant và thiết bị phải cùng mạng IPv4 LAN/VLAN.
+- Cho phép các cổng dò UDP `6666`, `6667` và `7000`.
+- Cho phép cổng điều khiển TCP `6668`.
+- Bản cài Docker có thể cần chế độ mạng host để nhận được gói tin broadcast từ
+  mạng vật lý. Với Home Assistant Container, dùng `network_mode: host` hoặc
+  thiết kế mạng tương đương có chuyển tiếp các cổng này.
+- Guest Wi-Fi isolation, client isolation và VLAN định tuyến thường chặn việc
+  dò hoặc điều khiển thiết bị.
 
-## Wi-Fi versus Zigbee devices
+## Phân biệt thiết bị Wi-Fi và Zigbee
 
-This local flow controls Tuya-compatible **Wi-Fi** devices. A Zigbee lamp or
-sensor usually appears only behind its gateway and will not expose a usable
-Wi-Fi local key. For Zigbee devices, pair the device with ZHA or Zigbee2MQTT,
-or configure the gateway through a supported cloud/local integration.
+Luồng local này điều khiển thiết bị **Wi-Fi** tương thích Tuya. Đèn hoặc cảm
+biến Zigbee thường chỉ xuất hiện phía sau gateway và không có local key Wi-Fi
+có thể sử dụng trực tiếp. Với thiết bị Zigbee, hãy ghép đôi bằng ZHA hoặc
+Zigbee2MQTT, hoặc cấu hình gateway qua một tích hợp cloud/local phù hợp.
 
-## Raw DP command
+## Gửi lệnh DP thô
 
-Local devices use numeric DP IDs. The LAN status sensor shows the current DP
-map in its attributes. Example for a power DP:
+Thiết bị local dùng DP ID dạng số. Cảm biến trạng thái LAN hiển thị bản đồ DP
+hiện tại trong thuộc tính. Ví dụ bật DP nguồn:
 
 ```yaml
 action: rangdong_smart.send_command
 data:
-  device_id: "device-id-from-the-LAN-status-sensor"
+  device_id: "device-id-tu-cam-bien-trang-thai-LAN"
   dp_id: 1
   value: true
 ```
 
-Legacy QR/cloud entries continue to accept a named DP code:
+Cấu hình QR/cloud cũ vẫn chấp nhận mã DP có tên:
 
 ```yaml
 action: rangdong_smart.send_command
 data:
-  device_id: "device-id-from-the-cloud-status-sensor"
+  device_id: "device-id-tu-cam-bien-trang-thai-cloud"
   code: switch_led
   value: true
 ```
 
-Only send values supported by the device. An invalid DP type can be rejected
-by the device.
+Chỉ gửi kiểu giá trị mà thiết bị hỗ trợ. Thiết bị có thể từ chối nếu kiểu dữ
+liệu DP không hợp lệ.
 
-## QR fallback
+## Dùng QR làm phương án dự phòng
 
-Selecting **Legacy cloud QR** keeps the previous User Code and QR flow. If the
-Rạng Đông app repeatedly reports a designated-app error such as `E0020003`,
-that is a server-side authorization restriction; changing the QR prefix does
-not bypass it. Use Local LAN mode instead when a local key is available.
+Chọn **QR cloud cũ** để tiếp tục dùng luồng User Code và QR trước đây. Nếu ứng
+dụng Rạng Đông liên tục báo lỗi chỉ dành cho ứng dụng được chỉ định, ví dụ
+`E0020003`, đây là giới hạn xác thực phía máy chủ; thay prefix của mã QR không
+thể vượt qua giới hạn này. Hãy dùng LAN nội bộ khi đã có local key.
 
-## Manual installation
+## Cài đặt thủ công
 
-Copy `custom_components/rangdong_smart` into:
+Sao chép thư mục `custom_components/rangdong_smart` vào:
 
 ```text
 <config>/custom_components/rangdong_smart
 ```
 
-Restart Home Assistant, then add **Rạng Đông Smart** from **Settings →
-Devices & services**.
+Khởi động lại Home Assistant, sau đó thêm **Rạng Đông Smart** trong
+**Cài đặt → Thiết bị & dịch vụ**.
 
-## Troubleshooting
+## Xử lý sự cố
 
-- **No devices found:** verify host networking, same subnet, broadcast rules,
-  and that the device is awake; try manual IP/ID entry.
-- **Cannot connect:** check TCP `6668`, firewall rules and Wi-Fi client
-  isolation.
-- **Invalid local key:** confirm the key belongs to that exact device; leave
-  protocol on Auto and retry.
-- **Tuya Cloud key error:** verify the project data center, API permissions,
-  linked account/device and Access ID/Secret. OEM Rạng Đông accounts might not
-  support Tuya IoT linking.
-- **Key not found in JSON:** ensure the export contains the exact Device ID and
-  a 16-byte local key; do not paste the Rạng Đông account password.
-- **Device is Zigbee:** use ZHA/Zigbee2MQTT or the gateway integration; the
-  Wi-Fi scan cannot pair a Zigbee child directly.
-- **IP changed:** open the integration entry and choose **Reconfigure**, then
-  enter the new address and local key. A DHCP reservation is recommended for
-  stable operation.
+- **Không tìm thấy thiết bị:** kiểm tra chế độ mạng host, subnet, quy tắc
+  broadcast và trạng thái nguồn của thiết bị; thử nhập IP/Device ID thủ công.
+- **Không thể kết nối:** kiểm tra TCP `6668`, tường lửa và chế độ cô lập thiết
+  bị Wi-Fi.
+- **Local key không hợp lệ:** xác nhận key thuộc đúng thiết bị; giữ giao thức ở
+  chế độ **Tự động** rồi thử lại.
+- **Lỗi lấy key từ Tuya Cloud:** kiểm tra trung tâm dữ liệu, quyền API, tài
+  khoản/thiết bị đã liên kết và Access ID/Access Secret. Tài khoản OEM Rạng
+  Đông có thể không hỗ trợ liên kết Tuya IoT.
+- **Không tìm thấy key trong JSON:** bảo đảm dữ liệu có đúng Device ID và
+  local key dài 16 byte; không dán mật khẩu tài khoản Rạng Đông.
+- **Thiết bị là Zigbee:** dùng ZHA, Zigbee2MQTT hoặc tích hợp gateway; quét
+  Wi-Fi không thể ghép trực tiếp thiết bị Zigbee con.
+- **Địa chỉ IP thay đổi:** mở mục cấu hình của tích hợp, chọn **Cấu hình lại
+  (Reconfigure)** rồi nhập địa chỉ và local key mới. Nên đặt DHCP reservation
+  để thiết bị luôn có IP ổn định.
+- **Helper không đăng nhập được hoặc gặp captcha:** đăng nhập bằng ứng dụng
+  Rạng Đông chính thức trên điện thoại đã root, mở danh sách thiết bị, sau đó
+  chọn **Dò bằng phiên app hiện có** trong helper.
 
-## Development
+## Phát triển và kiểm tra
 
-The installable component is under `custom_components/rangdong_smart`.
-The Home Assistant App is under `rangdong_key_helper`. Validation commands used
-by the project are:
+Mã tích hợp cài đặt nằm trong `custom_components/rangdong_smart`. Mã ứng dụng
+Home Assistant nằm trong `rangdong_key_helper`. Các lệnh kiểm tra của dự án:
 
 ```sh
 ruff check custom_components/rangdong_smart tests \
@@ -300,13 +320,14 @@ PYTHONPATH=custom_components:rangdong_key_helper/rootfs/app pytest -q
 cd rangdong_key_helper/agent && npm ci && npm run build
 ```
 
-The repository intentionally contains no real account credentials, local
-keys, cloud tokens or APK application secrets.
+Kho mã nguồn chủ ý không chứa tài khoản thật, mật khẩu, local key, cloud token
+hoặc bí mật ứng dụng lấy từ APK.
 
-## License
+## Giấy phép
 
-Project-authored code is released under the MIT License. The key-helper image
-and compiled agent include Frida components under their upstream licenses; see
-`rangdong_key_helper/THIRD_PARTY_NOTICES.md` and
-`rangdong_key_helper/LICENSE.frida.txt`. Rạng Đông, ThingClips, Tuya and related
-product names are trademarks of their respective owners.
+Phần mã do dự án tự phát triển được phát hành theo giấy phép MIT. Image của
+key helper và agent đã biên dịch có chứa các thành phần Frida theo giấy phép từ
+dự án gốc; xem [thông báo thành phần bên thứ ba](rangdong_key_helper/THIRD_PARTY_NOTICES.md)
+và [giấy phép Frida](rangdong_key_helper/LICENSE.frida.txt). Rạng Đông,
+ThingClips, Tuya và các tên sản phẩm liên quan là nhãn hiệu của chủ sở hữu
+tương ứng.

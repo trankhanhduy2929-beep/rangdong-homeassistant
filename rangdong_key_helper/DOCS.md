@@ -1,94 +1,98 @@
 # Rạng Đông Key Helper
 
-This Home Assistant app (formerly called an add-on) imports `local_key` values
-from the original Rạng Đông Android app on a phone you control. It does not
-require a Tuya IoT Cloud project.
+Ứng dụng Home Assistant này (trước đây gọi là add-on) nhập các giá trị
+`local_key` từ ứng dụng Rạng Đông Android chính thức trên điện thoại do bạn
+kiểm soát. Ứng dụng không cần Tuya IoT Cloud project.
 
-## Requirements
+## Yêu cầu
 
-- Home Assistant OS with the **Rạng Đông Smart** custom integration installed.
-- An Android phone on the same LAN as Home Assistant.
-- The official Rạng Đông app installed as `com.rd.smart`.
-- The phone is **rooted**, and its root manager can grant root to the ADB shell.
-- Android **Developer options → Wireless debugging** is enabled.
+- Home Assistant OS đã cài tích hợp tùy chỉnh **Rạng Đông Smart**.
+- Điện thoại Android cùng mạng LAN với Home Assistant.
+- Ứng dụng Rạng Đông chính thức đã cài với tên gói `com.rd.smart`.
+- Điện thoại **đã root** và trình quản lý root có thể cấp quyền root cho ADB
+  shell.
+- Đã bật **Tùy chọn nhà phát triển → Wireless debugging** trên Android.
 
-Wireless ADB by itself is not enough on an unrooted phone. The Rạng Đông APK is
-not debuggable and disables Android backup, so the helper cannot attach to the
-private app process without root.
+Chỉ bật Wireless ADB là chưa đủ nếu điện thoại chưa root. APK Rạng Đông không
+bật chế độ gỡ lỗi và vô hiệu hóa Android backup, vì vậy helper không thể gắn vào
+tiến trình riêng của ứng dụng nếu không có quyền root.
 
-## First-time ADB pairing
+## Ghép đôi ADB lần đầu
 
-1. On Android, open **Developer options → Wireless debugging**.
-2. Select **Pair device with pairing code**.
-3. Enter the phone IP, temporary pairing port and six-digit code in the helper.
-4. Select **Pair ADB** before the Android pairing screen expires.
-5. Return to the main Wireless debugging screen and copy its separate
-   **IP address & port** into **ADB connection port**.
-6. Approve the root request from Magisk or the installed root manager when the
-   helper first checks the device.
+1. Trên Android, mở **Tùy chọn nhà phát triển → Wireless debugging**.
+2. Chọn **Pair device with pairing code**.
+3. Nhập IP điện thoại, cổng ghép đôi tạm thời và mã sáu chữ số vào helper.
+4. Bấm **Ghép đôi ADB** trước khi màn hình ghép đôi của Android hết hạn.
+5. Quay lại màn hình Wireless debugging chính và chép **IP address & port** vào
+   ô **Cổng kết nối ADB**.
+6. Khi helper kiểm tra điện thoại lần đầu, chấp thuận yêu cầu cấp root từ
+   Magisk hoặc trình quản lý root đang dùng.
 
-Android often assigns different pairing and connection ports. A successful
-pairing does not mean port `5555` is the correct connection port.
+Android thường cấp cổng ghép đôi và cổng kết nối khác nhau. Ghép đôi thành công
+không có nghĩa cổng `5555` là cổng kết nối đúng.
 
-## Import with an existing app session
+## Nhập key bằng phiên ứng dụng đang đăng nhập
 
-1. Sign in to the Rạng Đông app on the phone and let its home/device list load.
-2. Open the helper Ingress page and select **Scan using current app session**.
-3. Wait for the helper to show only masked key values.
-4. In Home Assistant, open **Settings → Devices & services → Add integration →
+1. Đăng nhập vào ứng dụng Rạng Đông trên điện thoại và chờ danh sách nhà hoặc
+   thiết bị tải xong.
+2. Mở trang Ingress của helper và chọn **Dò bằng phiên app hiện có**.
+3. Chờ helper hiển thị danh sách thiết bị; key đầy đủ chỉ được giữ tạm và giao
+   diện chỉ hiển thị giá trị đã che.
+4. Trong Home Assistant, mở **Cài đặt → Thiết bị & dịch vụ → Thêm tích hợp →
    Rạng Đông Smart**.
-5. Select **Local LAN → Android bridge**, choose the imported Device ID and
-   finish setup. The integration verifies the key against the LAN device.
+5. Chọn **LAN nội bộ → Android bridge**, chọn Device ID đã nhập và hoàn tất
+   cài đặt. Tích hợp sẽ kiểm tra key với thiết bị trong LAN.
 
-## Sign in from the helper
+## Đăng nhập từ helper
 
-If the Android app is signed out, enter the country code, phone number and
-password, then select **Sign in & scan**. The Linux container does not imitate
-the private cloud protocol. Instead, Frida invokes
-`ThingHomeSdk.getUserInstance().loginWithPhonePassword(...)` inside the
-original app process, then asks that SDK for the user's homes and devices.
+Nếu ứng dụng Android đang đăng xuất, nhập mã quốc gia, số điện thoại và mật khẩu,
+sau đó bấm **Đăng nhập & dò**. Container Linux không giả lập giao thức cloud
+riêng của ứng dụng. Thay vào đó, Frida gọi
+`ThingHomeSdk.getUserInstance().loginWithPhonePassword(...)` bên trong tiến
+trình ứng dụng gốc, rồi yêu cầu SDK trả về danh sách nhà và thiết bị của tài
+khoản.
 
-The password is not written to add-on options, files, logs or the repository.
-It exists temporarily in browser, Python and Android process memory during the
-request. If the provider requires a captcha, verification ticket or another
-interactive challenge, sign in with the official app and use the existing
-session method.
+Mật khẩu không được ghi vào tùy chọn ứng dụng, tệp, log hoặc kho mã. Mật khẩu chỉ
+tồn tại tạm thời trong bộ nhớ của trình duyệt, Python và tiến trình Android
+trong lúc thực hiện yêu cầu. Nếu nhà cung cấp yêu cầu captcha, vé xác minh hoặc
+một thử thách tương tác khác, hãy đăng nhập bằng ứng dụng chính thức rồi dùng
+phương thức lấy phiên hiện có.
 
-## Security behavior
+## Cơ chế bảo mật
 
-- The web UI is available only through administrator-only Home Assistant
-  Ingress, verifies `X-Remote-User-Id` against Home Assistant's administrator
-  group and uses a per-process CSRF token.
-- A Frida server release is downloaded from the official Frida GitHub release,
-  matched to the Android ABI and verified against a pinned SHA-256 checksum.
-- Frida binds to Android loopback and is reached through a container-local ADB
-  port forward. The helper stops its Frida process after each operation.
-- Full local keys are sent only to the authenticated Home Assistant bridge.
-  The UI, successful responses and logs contain masked values only.
-- Imported bridge records live in Home Assistant memory until consumed,
-  cleared or Home Assistant restarts. A key accepted by local setup is then
-  stored in that integration config entry because it is required for encrypted
-  Tuya LAN communication.
+- Giao diện web chỉ mở qua Ingress Home Assistant dành cho quản trị viên; helper
+  kiểm tra `X-Remote-User-Id` với nhóm quản trị viên của Home Assistant và dùng
+  CSRF token riêng cho mỗi tiến trình.
+- Frida server được tải từ bản phát hành Frida chính thức trên GitHub, chọn đúng
+  ABI Android và kiểm tra bằng SHA-256 đã ghim.
+- Frida chỉ lắng nghe trên loopback của Android và được truy cập qua cổng chuyển tiếp
+  ADB nội bộ của container. Helper dừng tiến trình Frida sau mỗi lần thao tác.
+- Key đầy đủ chỉ được gửi đến bridge Home Assistant đã xác thực. Giao diện,
+  phản hồi thành công và log chỉ chứa giá trị đã che.
+- Bản ghi bridge đã nhập chỉ tồn tại trong bộ nhớ Home Assistant cho tới khi
+  được dùng, bị xóa hoặc Home Assistant khởi động lại. Key được chấp nhận trong
+  bước thiết lập local sẽ được lưu vào config entry của tích hợp vì cần thiết
+  cho giao tiếp Tuya LAN đã mã hóa.
 
-Stop or uninstall the helper after completing the import if it is no longer
-needed. Use **Clear temporary bridge keys** before stopping if setup was not
-completed.
+Sau khi nhập xong, hãy dừng hoặc gỡ helper nếu không còn cần. Nếu chưa hoàn
+tất cài đặt, dùng **Xóa key tạm khỏi bridge** trước khi dừng ứng dụng.
 
-Project-authored code is MIT licensed. The image and compiled agent also use
-Frida components under their upstream licenses; see `THIRD_PARTY_NOTICES.md`
-and `LICENSE.frida.txt` in the repository and container image.
+Mã do dự án tự phát triển được cấp phép theo MIT. Image và agent đã biên dịch
+cũng dùng các thành phần Frida theo giấy phép của dự án gốc; xem
+[thông báo thành phần bên thứ ba](THIRD_PARTY_NOTICES.md) và
+[giấy phép Frida](LICENSE.frida.txt) trong kho mã và image container.
 
-## Troubleshooting
+## Xử lý sự cố
 
-- **ADB pairing failed:** generate a new pairing code and use the temporary
-  port shown in the pairing dialog.
-- **ADB connection failed:** use the port on the main Wireless debugging page,
-  which commonly changes after a reboot or toggle.
-- **Root required:** grant root to `shell`/ADB in the root manager. A non-rooted
-  device is not supported.
-- **App not logged in:** sign in through the helper or open the official app,
-  complete any captcha and retry with its current session.
-- **No local keys:** open the device list in the app first. Hub subdevices may
-  not have an independently usable LAN key or IP address.
-- **SDK missing after an app update:** the OEM may have changed its package or
-  ThingClips SDK classes; update the helper before trying again.
+- **Ghép đôi ADB thất bại:** tạo mã ghép đôi mới và dùng cổng tạm thời hiển thị
+  trong hộp thoại ghép đôi.
+- **Kết nối ADB thất bại:** dùng cổng trên trang Wireless debugging chính; cổng
+  này thường thay đổi sau khi khởi động lại hoặc tắt/bật Wireless debugging.
+- **Yêu cầu root:** cấp quyền root cho `shell`/ADB trong trình quản lý root.
+  Điện thoại chưa root không được hỗ trợ.
+- **Ứng dụng chưa đăng nhập:** đăng nhập qua helper hoặc mở ứng dụng chính
+  thức, hoàn tất captcha nếu có, rồi thử lại bằng phiên hiện tại.
+- **Không có local key:** mở danh sách thiết bị trong ứng dụng chính thức trước.
+  Thiết bị con phía sau hub có thể không có key LAN hoặc IP riêng để sử dụng.
+- **Thiếu SDK sau khi ứng dụng cập nhật:** nhà sản xuất có thể đã thay đổi
+  package hoặc lớp SDK ThingClips; hãy cập nhật helper trước khi thử lại.

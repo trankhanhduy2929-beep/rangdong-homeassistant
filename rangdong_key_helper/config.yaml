@@ -1,7 +1,7 @@
 name: Rạng Đông Key Helper
 version: "0.1.0"
 slug: rangdong_key_helper
-description: Import local keys from your own rooted Android phone through ADB and Frida
+description: Nhập local key từ điện thoại Android đã root của bạn qua ADB và Frida
 url: https://github.com/trankhanhduy2929-beep/rangdong-homeassistant/tree/main/rangdong_key_helper
 image: ghcr.io/trankhanhduy2929-beep/rangdong-key-helper
 arch:
@@ -12,7 +12,7 @@ boot: manual
 stage: experimental
 ingress: true
 panel_icon: mdi:key-wireless
-panel_title: Rạng Đông Keys
+panel_title: Khóa Rạng Đông
 homeassistant_api: true
 options:
   adb_port: 5555

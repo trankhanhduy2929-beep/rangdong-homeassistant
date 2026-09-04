@@ -2,7 +2,7 @@
   "name": "rangdong-key-helper-agent",
   "private": true,
   "version": "0.1.0",
-  "description": "Frida agent bundled into the Rạng Đông Key Helper add-on",
+  "description": "Agent Frida được đóng gói trong ứng dụng Rạng Đông Key Helper",
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {

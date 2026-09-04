@@ -8,7 +8,7 @@ LABEL \
     io.hass.type="app" \
     io.hass.arch="${BUILD_ARCH}" \
     org.opencontainers.image.title="Rạng Đông Key Helper" \
-    org.opencontainers.image.description="Rooted Android ADB and Frida helper for Rạng Đông Smart" \
+    org.opencontainers.image.description="Helper ADB và Frida cho Rạng Đông Smart trên Android đã root" \
     org.opencontainers.image.source="https://github.com/trankhanhduy2929-beep/rangdong-homeassistant" \
     org.opencontainers.image.licenses="MIT AND (LGPL-2.0-or-later WITH WxWindows-exception-3.1)"
 

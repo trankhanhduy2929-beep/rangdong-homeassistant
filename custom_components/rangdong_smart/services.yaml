@@ -1,24 +1,24 @@
 send_command:
-  name: Send raw DP command
-  description: Send one Tuya data-point command over the configured local or legacy cloud connection.
+  name: Gửi lệnh DP thô
+  description: Gửi một lệnh data-point Tuya qua kết nối LAN nội bộ hoặc cloud cũ đã cấu hình.
   fields:
     device_id:
       name: Device ID
-      description: The device_id attribute shown by the summary sensor.
+      description: Thuộc tính device_id được hiển thị bởi cảm biến tổng quan.
       required: true
       example: example-device-id
       selector:
         text:
     code:
-      name: DP code
-      description: Legacy cloud DP code. For local devices use numeric dp_id instead.
+      name: Mã DP
+      description: Mã DP của cloud cũ. Với thiết bị local, hãy dùng dp_id dạng số.
       required: false
       example: switch_led
       selector:
         text:
     dp_id:
-      name: Local DP ID
-      description: Numeric Tuya data-point ID shown in the LAN status sensor attributes.
+      name: ID DP local
+      description: ID data-point Tuya dạng số trong thuộc tính cảm biến trạng thái LAN.
       required: false
       example: 1
       selector:
@@ -27,7 +27,7 @@ send_command:
           max: 255
           mode: box
     value:
-      name: Value
-      description: Boolean, number, string, object or list accepted by the device DP.
+      name: Giá trị
+      description: Giá trị boolean, số, chuỗi, object hoặc danh sách mà DP của thiết bị chấp nhận.
       required: true
       example: true

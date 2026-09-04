@@ -6,5 +6,5 @@ configuration:
     name: Cổng kết nối ADB
     description: Cổng kết nối Wireless debugging, không phải cổng ghép đôi tạm thời.
   package_name:
-    name: Android package
-    description: Giữ com.rd.smart trừ khi bản app Rạng Đông đã cài dùng package khác.
+    name: Tên gói Android
+    description: Giữ com.rd.smart trừ khi ứng dụng Rạng Đông đã cài dùng tên gói khác.
