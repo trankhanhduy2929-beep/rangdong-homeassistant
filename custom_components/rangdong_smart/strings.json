@@ -8,6 +8,7 @@
       "cannot_connect_local": "The device was found, but Home Assistant could not read it over the LAN. Check that the device and Home Assistant are on the same network and that TCP port 6668 is reachable.",
       "cloud_entry_unavailable": "No loaded Rạng Đông cloud entry contains a usable local key. Choose Tuya Cloud, JSON export or manual entry instead.",
       "cloud_key_error": "Tuya Cloud could not return local keys. Check the Access ID, Access Secret, data center, API authorization and that the device account is linked to this cloud project.",
+      "bridge_empty": "No key was received from the Android bridge. Send a trusted export to {endpoint}, then press Submit again.",
       "designated_app_error": "Rạng Đông/Tuya rejected QR authorization ({code}) because the scanner is not an approved designated app. Start a fresh flow and scan promptly with the scanner inside Rạng Đông Smart. If it fails repeatedly, the OEM must enable Home Assistant authorization; changing the QR prefix cannot bypass this backend restriction. Details: {msg}",
       "invalid_local_host": "Enter a private IPv4 address for the device.",
       "invalid_local_key": "The local key or protocol version was rejected. Check the 16-character key and try Auto protocol.",
@@ -46,7 +47,7 @@
           "local_key": "Local key",
           "protocol_version": "Protocol version"
         },
-        "description": "Choose how to obtain the device's local key. LAN discovery cannot reveal it. Manual mode uses the optional Local key field; cloud and JSON modes open a separate one-time import step. Auto tries Tuya protocols 3.5 through 3.1 before saving."
+        "description": "Choose how to obtain the device's local key. LAN discovery cannot reveal it. Android bridge, cloud and JSON modes use a one-time import step; manual mode uses the Local key field. Auto tries Tuya protocols 3.5 through 3.1 before saving."
       },
       "local_key_cloud": {
         "data": {
@@ -64,11 +65,18 @@
         },
         "description": "Paste a trusted JSON export containing Device ID and local key fields. TinyTuya devices.json, Tuya API local_key/localKey and common LocalTuya exports are supported. The JSON is parsed once and is not stored."
       },
+      "local_key_bridge": {
+        "data": {
+          "device_id": "Device ID to match",
+          "bridge_refresh": "Refresh key list"
+        },
+        "description": "On your own Android phone, export the logged-in Rạng Đông device records with the local helper and POST the JSON to {endpoint}. Home Assistant keeps the received keys only in memory until you configure a device; the list endpoint never returns raw keys."
+      },
       "local_key_device": {
         "data": {
           "imported_device": "Imported device"
         },
-        "description": "Select which imported device should be configured. Local keys are hidden from this list."
+        "description": "Select which imported or bridged device should be configured. Local keys are hidden from this list."
       },
       "local_key_confirm": {
         "data": {
@@ -124,6 +132,7 @@
       "options": {
         "existing_cloud": "Existing authorized cloud entry",
         "json_export": "Import JSON export",
+        "android_bridge": "Android bridge (local one-time import)",
         "manual": "Enter local key manually",
         "tuya_cloud": "Fetch once from Tuya Cloud"
       }

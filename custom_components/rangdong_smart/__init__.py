@@ -44,6 +44,7 @@ from .const import (
     TUYA_CLIENT_ID,
 )
 from .coordinator import RangDongLocalCoordinator
+from .key_bridge import register_key_bridge
 from .local import RangDongLocalAuthError, RangDongLocalClient
 
 LOGGER = logging.getLogger(__package__)
@@ -155,6 +156,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
     del config
     hass.data.setdefault(DOMAIN, {})
+    register_key_bridge(hass)
     if not hass.services.has_service(DOMAIN, SERVICE_SEND_COMMAND):
         hass.services.async_register(
             DOMAIN,
@@ -362,6 +364,6 @@ async def async_remove_entry(hass: HomeAssistant, entry: RangDongConfigEntry) ->
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Mark legacy entries as compatible with the dual-mode integration."""
 
-    if entry.version < 3:
-        hass.config_entries.async_update_entry(entry, version=3)
+    if entry.version < 4:
+        hass.config_entries.async_update_entry(entry, version=4)
     return True

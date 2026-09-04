@@ -10,6 +10,7 @@ PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
 CONF_CONNECTION_TYPE = "connection_type"
 CONF_ACCESS_ID = "access_id"
 CONF_ACCESS_SECRET = "access_secret"
+CONF_BRIDGE_REFRESH = "bridge_refresh"
 CONF_CLOUD_REGION = "cloud_region"
 CONF_DISCOVERED_DEVICE = "discovered_device"
 CONF_IMPORTED_DEVICE = "imported_device"
@@ -23,6 +24,7 @@ CONNECTION_LOCAL = "local"
 CONNECTION_CLOUD_QR = "cloud_qr"
 
 LOCAL_KEY_SOURCE_MANUAL = "manual"
+LOCAL_KEY_SOURCE_ANDROID_BRIDGE = "android_bridge"
 LOCAL_KEY_SOURCE_TUYA_CLOUD = "tuya_cloud"
 LOCAL_KEY_SOURCE_JSON = "json_export"
 LOCAL_KEY_SOURCE_EXISTING_CLOUD = "existing_cloud"
@@ -46,5 +48,9 @@ QR_DESIGNATED_APP_CODES = frozenset({"E0020003"})
 SIGNAL_DISCOVERY_NEW = f"{DOMAIN}_discovery_new"
 SIGNAL_UPDATE_PREFIX = f"{DOMAIN}_update"
 SERVICE_SEND_COMMAND = "send_command"
+
+KEY_BRIDGE_RUNTIME = f"{DOMAIN}_key_bridge_runtime"
+KEY_BRIDGE_VIEW_REGISTERED = f"{DOMAIN}_key_bridge_view_registered"
+KEY_BRIDGE_API_PATH = "/api/rangdong_smart/key-import"
 
 REDACTED = "<redacted>"

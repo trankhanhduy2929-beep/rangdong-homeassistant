@@ -20,6 +20,8 @@ fallback.
 - One-time `local_key` retrieval from a user-controlled Tuya IoT Cloud
   project. The project Access ID and Access Secret are not stored.
 - One-time import from TinyTuya, Tuya API and common LocalTuya JSON exports.
+- Authenticated Android bridge for one-time local helper uploads and automatic
+  Device ID listing in the setup flow.
 - Reuse of a `local_key` already present in a working Rạng Đông QR/cloud entry.
 - A switch entity for each boolean DP and a diagnostic LAN status sensor with
   the current DP snapshot.
@@ -55,6 +57,8 @@ repository.
 3. Select the device found by the scan. If the list is empty, choose
    **Enter manually** and enter its IP address and device ID.
 4. Select a local-key source:
+   - **Android bridge** after a local helper has uploaded the Rạng Đông app
+     records;
    - **Fetch once from Tuya Cloud** for a linked Tuya IoT developer project;
    - **Import JSON export** for TinyTuya/LocalTuya/Tuya API data;
    - **Existing authorized cloud entry** when a working QR entry already has
@@ -119,6 +123,44 @@ private device cache and exposes it to the app as `DeviceBean.localKey`. Reading
 that private cache normally requires a rooted/debuggable test device or a
 runtime inspection tool such as Frida. Do this only on your own account and
 phone, keep the extracted key private, and never commit it to this repository.
+
+### Android bridge (one-time local import)
+
+The custom component cannot read another Android application's private storage
+by itself. To avoid a Tuya IoT Cloud project, use a helper on the phone you
+control to export records from the already logged-in Rạng Đông app, then send
+that export to the authenticated Home Assistant endpoint:
+
+```sh
+curl -X POST \
+  -H "Authorization: Bearer YOUR_HOME_ASSISTANT_TOKEN" \
+  -H "Content-Type: application/json" \
+  --data-binary @rangdong-devices.json \
+  http://HOME_ASSISTANT:8123/api/rangdong_smart/key-import
+```
+
+The payload can use `devId`/`deviceId` together with `localKey`, `local_key` or
+`key`, plus optional `name`, `ip`, `productId` and `version`. After the POST,
+choose **Android bridge** in the setup flow and press **Refresh key list**.
+The flow lists Device IDs without displaying the raw key, probes each selected
+device over LAN, and saves only the working local configuration. The bridge
+keeps imported keys in memory only and removes a key after it is consumed.
+
+To inspect only masked metadata or clear the transient registry:
+
+```sh
+curl -H "Authorization: Bearer YOUR_HOME_ASSISTANT_TOKEN" \
+  http://HOME_ASSISTANT:8123/api/rangdong_smart/key-import
+
+curl -X DELETE \
+  -H "Authorization: Bearer YOUR_HOME_ASSISTANT_TOKEN" \
+  http://HOME_ASSISTANT:8123/api/rangdong_smart/key-import
+```
+
+Use HTTPS or a trusted LAN when uploading an export. Never put the Rạng Đông
+password, a Home Assistant token or a raw local key in a public issue or
+repository. This bridge is an import channel; it does not pretend that a
+username/password alone can bypass the OEM app's mobile API identity checks.
 
 The LAN scanner itself cannot derive the key from the broadcast packet. Without
 a matching local key, the integration can identify the device but cannot decrypt

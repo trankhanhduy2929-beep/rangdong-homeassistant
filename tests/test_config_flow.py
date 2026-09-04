@@ -11,15 +11,30 @@ from rangdong_smart.config_flow import RangDongConfigFlow
 from rangdong_smart.const import (
     CONF_ACCESS_ID,
     CONF_ACCESS_SECRET,
+    CONF_BRIDGE_REFRESH,
     CONF_CLOUD_REGION,
     CONF_KEY_EXPORT,
     CONF_LOCAL_KEY_SOURCE,
+    LOCAL_KEY_SOURCE_ANDROID_BRIDGE,
     LOCAL_KEY_SOURCE_EXISTING_CLOUD,
     LOCAL_KEY_SOURCE_JSON,
     LOCAL_KEY_SOURCE_TUYA_CLOUD,
 )
+from rangdong_smart.key_bridge import merge_key_bridge_records
 from rangdong_smart.key_sources import LocalKeyRecord, RangDongCloudKeyError
 from rangdong_smart.local import DiscoveredLocalDevice, LocalProbeResult
+
+
+class FakeHTTP:
+    """Collect HTTP views registered by a config flow."""
+
+    def __init__(self) -> None:
+        self.views = []
+
+    def register_view(self, view) -> None:
+        """Record one registered view."""
+
+        self.views.append(view)
 
 
 class FakeHass:
@@ -27,6 +42,7 @@ class FakeHass:
 
     def __init__(self) -> None:
         self.data = {}
+        self.http = FakeHTTP()
 
     async def async_add_executor_job(self, target, *args):
         """Call an executor target without creating a thread."""
@@ -379,6 +395,60 @@ class ConfigFlowTests(unittest.TestCase):
         )
 
         self.assertEqual(result["step_id"], "local_key_json")
+
+    def test_android_bridge_source_lists_matching_key(self) -> None:
+        flow = RangDongConfigFlow()
+        flow.hass = FakeHass()
+        flow.context = {"source": "user"}
+        local_key = "abcdefghijklmnop"
+        merge_key_bridge_records(
+            flow.hass,
+            {
+                "device-1": LocalKeyRecord(
+                    device_id="device-1",
+                    local_key=local_key,
+                    host="192.168.1.20",
+                    name="Bridge lamp",
+                )
+            },
+        )
+
+        result = asyncio.run(
+            flow.async_step_local_device(
+                {
+                    "name": "Bridge lamp",
+                    "host": "192.168.1.20",
+                    "device_id": "device-1",
+                    "protocol_version": "auto",
+                    CONF_LOCAL_KEY_SOURCE: LOCAL_KEY_SOURCE_ANDROID_BRIDGE,
+                }
+            )
+        )
+
+        self.assertEqual(result["step_id"], "local_key_confirm")
+        self.assertNotIn(local_key, repr(result))
+
+    def test_android_bridge_source_requests_refresh_when_empty(self) -> None:
+        flow = RangDongConfigFlow()
+        flow.hass = FakeHass()
+        flow.context = {"source": "user"}
+
+        result = asyncio.run(
+            flow.async_step_local_device(
+                {
+                    "name": "Rạng Đông Local",
+                    "host": "192.168.1.20",
+                    "device_id": "device-1",
+                    "protocol_version": "auto",
+                    CONF_LOCAL_KEY_SOURCE: LOCAL_KEY_SOURCE_ANDROID_BRIDGE,
+                }
+            )
+        )
+
+        self.assertEqual(result["step_id"], "local_key_bridge")
+        schema_keys = {key.schema for key in result["data_schema"].schema}
+        self.assertIn(CONF_BRIDGE_REFRESH, schema_keys)
+        self.assertEqual(len(flow.hass.http.views), 1)
 
     def test_reconfigure_local_updates_existing_entry(self) -> None:
         flow = RangDongConfigFlow()

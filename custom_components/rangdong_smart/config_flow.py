@@ -20,6 +20,7 @@ from tuya_sharing import LoginControl
 from .const import (
     CONF_ACCESS_ID,
     CONF_ACCESS_SECRET,
+    CONF_BRIDGE_REFRESH,
     CONF_CLOUD_REGION,
     CONF_CONNECTION_TYPE,
     CONF_DISCOVERED_DEVICE,
@@ -39,6 +40,8 @@ from .const import (
     DEFAULT_TUYA_CLOUD_REGION,
     DISCOVERY_MANUAL,
     DOMAIN,
+    KEY_BRIDGE_API_PATH,
+    LOCAL_KEY_SOURCE_ANDROID_BRIDGE,
     LOCAL_KEY_SOURCE_EXISTING_CLOUD,
     LOCAL_KEY_SOURCE_JSON,
     LOCAL_KEY_SOURCE_MANUAL,
@@ -48,6 +51,11 @@ from .const import (
     QR_PAYLOAD_PREFIX,
     TUYA_CLIENT_ID,
     TUYA_SCHEMA,
+)
+from .key_bridge import (
+    get_key_bridge_records,
+    register_key_bridge,
+    remove_key_bridge_record,
 )
 from .key_sources import (
     TUYA_CLOUD_REGIONS,
@@ -80,7 +88,7 @@ def build_qr_payload(qr_token: str) -> str:
 class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
     """Set up a local device or use the legacy QR flow."""
 
-    VERSION = 3
+    VERSION = 4
 
     def __init__(self) -> None:
         """Initialize the flow."""
@@ -135,7 +143,10 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             options = [
                 {
                     "value": device_id,
-                    "label": _discovered_device_label(device),
+                    "label": _discovered_device_label(
+                        device,
+                        has_local_key=device_id in get_key_bridge_records(self.hass),
+                    ),
                 }
                 for device_id, device in self._local_devices.items()
             ]
@@ -243,6 +254,33 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self._show_local_key_json_form(errors, user_input)
 
+    async def async_step_local_key_bridge(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Select a key delivered by the authenticated Android bridge."""
+
+        self._ensure_key_bridge_registered()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            records = get_key_bridge_records(self.hass)
+            if not records:
+                errors["base"] = "bridge_empty"
+            else:
+                device_id = str(
+                    user_input.get(CONF_DEVICE_ID) or self._local_device_id
+                ).strip()
+                record = records.get(device_id)
+                if record is None and len(records) == 1:
+                    record = next(iter(records.values()))
+                if record is None:
+                    self._key_records = records
+                    return self._show_imported_device_form(records)
+                self._key_records = records
+                self._set_pending_key_record(record)
+                return await self.async_step_local_key_confirm()
+
+        return self._show_local_key_bridge_form(errors, user_input)
+
     async def async_step_local_key_device(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -297,6 +335,16 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                     return await self.async_step_local_key_cloud()
                 if selected_source == LOCAL_KEY_SOURCE_JSON:
                     return await self.async_step_local_key_json()
+                if selected_source == LOCAL_KEY_SOURCE_ANDROID_BRIDGE:
+                    self._ensure_key_bridge_registered()
+                    self._key_records = get_key_bridge_records(self.hass)
+                    record = self._key_records.get(self._local_device_id)
+                    if record is not None:
+                        self._set_pending_key_record(record)
+                        return await self.async_step_local_key_confirm()
+                    if self._key_records:
+                        return self._show_imported_device_form(self._key_records)
+                    return await self.async_step_local_key_bridge()
                 if selected_source == LOCAL_KEY_SOURCE_EXISTING_CLOUD:
                     self._refresh_existing_cloud_records()
                     self._key_records = dict(self._existing_cloud_records)
@@ -329,6 +377,14 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = error
 
         return self._show_local_device_form(errors=errors, user_input=user_input)
+
+    def _ensure_key_bridge_registered(self) -> None:
+        """Register the bridge while a first-time config flow is active."""
+
+        hass = getattr(self, "hass", None)
+        http = getattr(hass, "http", None)
+        if http is not None and hasattr(http, "register_view"):
+            register_key_bridge(hass)
 
     async def _async_try_finish_local_entry(
         self,
@@ -388,8 +444,6 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             CONF_NAME: name,
         }
         await self.async_set_unique_id(f"local:{device_id}")
-        self._pending_key_record = None
-        self._key_records = {}
         if self.source in {SOURCE_REAUTH, SOURCE_RECONFIGURE}:
             self._abort_if_unique_id_mismatch()
             entry = (
@@ -397,6 +451,9 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 if self.source == SOURCE_REAUTH
                 else self._get_reconfigure_entry()
             )
+            remove_key_bridge_record(self.hass, device_id)
+            self._pending_key_record = None
+            self._key_records = {}
             return (
                 self.async_update_reload_and_abort(
                     entry,
@@ -406,6 +463,9 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 "",
             )
         self._abort_if_unique_id_configured()
+        remove_key_bridge_record(self.hass, device_id)
+        self._pending_key_record = None
+        self._key_records = {}
         return (
             self.async_create_entry(
                 title=entry_data[CONF_NAME],
@@ -791,6 +851,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._refresh_existing_cloud_records()
         options = [
+            LOCAL_KEY_SOURCE_ANDROID_BRIDGE,
             LOCAL_KEY_SOURCE_MANUAL,
             LOCAL_KEY_SOURCE_TUYA_CLOUD,
             LOCAL_KEY_SOURCE_JSON,
@@ -798,6 +859,27 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         if self._existing_cloud_records:
             options.append(LOCAL_KEY_SOURCE_EXISTING_CLOUD)
         return options
+
+    def _show_local_key_bridge_form(
+        self,
+        errors: dict[str, str],
+        user_input: dict[str, Any] | None,
+    ) -> ConfigFlowResult:
+        """Render the one-time Android bridge refresh form."""
+
+        values = user_input or {}
+        device_id = str(values.get(CONF_DEVICE_ID) or self._local_device_id).strip()
+        return self.async_show_form(
+            step_id="local_key_bridge",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_DEVICE_ID, default=device_id): str,
+                    vol.Optional(CONF_BRIDGE_REFRESH, default=True): bool,
+                }
+            ),
+            errors=errors,
+            description_placeholders={"endpoint": KEY_BRIDGE_API_PATH},
+        )
 
     def _show_local_key_cloud_form(
         self,
@@ -1040,7 +1122,11 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         }
 
 
-def _discovered_device_label(device: DiscoveredLocalDevice) -> str:
+def _discovered_device_label(
+    device: DiscoveredLocalDevice,
+    *,
+    has_local_key: bool = False,
+) -> str:
     """Build a compact, non-secret label for a scan result."""
 
     details = [device.host]
@@ -1048,6 +1134,8 @@ def _discovered_device_label(device: DiscoveredLocalDevice) -> str:
         details.append(f"v{device.protocol_version}")
     if device.product_id:
         details.append(device.product_id)
+    if has_local_key:
+        details.append("key ready")
     prefix = device.name or device.device_id
     return f"{prefix} ({', '.join(details)})"
 
