@@ -26,10 +26,8 @@ xác thực QR cũ làm lựa chọn dự phòng.
   phổ biến.
 - Android bridge có xác thực để nhận dữ liệu từ helper cục bộ và tự động liệt
   kê Device ID trong luồng cài đặt.
-- Ứng dụng Home Assistant thử nghiệm **Rạng Đông Key Helper**, có Ingress chỉ
-  dành cho quản trị viên, ghép đôi Android Wireless ADB, kiểm tra Frida và tùy
-  chọn đăng nhập một lần bằng số điện thoại/mật khẩu thông qua SDK nằm trong
-  chính ứng dụng Android Rạng Đông.
+- Add-on **Rạng Đông Key Helper** có Ingress dành cho quản trị viên, đăng nhập
+  cloud lấy key không cần Android; giữ Wireless ADB/Frida làm phương án bổ sung.
 - Tái sử dụng `local_key` đã có trong một cấu hình Rạng Đông QR/cloud đang hoạt
   động.
 - Tạo công tắc cho từng DP kiểu boolean và cảm biến chẩn đoán trạng thái LAN có
@@ -130,6 +128,8 @@ Mỗi thiết bị được tạo thành một mục cấu hình (config entry) 
 
 Ứng dụng chính thức thường không hiển thị local key. Các nguồn được hỗ trợ gồm:
 
+- đăng nhập Rạng Đông bằng email trong **Key Helper 0.2.0**, dùng cặp APK được
+  hỗ trợ, không cần Android hoặc Tuya IoT project;
 - bản dữ liệu thiết bị Tuya/Rạng Đông đã xuất từ nguồn được cấp quyền hoặc một tích hợp local
   hiện có đã chứa key;
 - thông tin thiết bị trong Tuya developer/cloud project do bạn quản lý; hoặc
@@ -154,8 +154,8 @@ nhập thành công nếu không còn dùng ở nơi khác.
 
 Rạng Đông là ứng dụng OEM nên một số tài khoản không thể liên kết với Tuya IoT
 project thông thường. Tích hợp không thể vượt qua giới hạn phía máy chủ này.
-Nếu không liên kết được, hãy dùng dữ liệu JSON xuất từ nguồn đáng tin cậy hoặc
-trích xuất riêng tư từ điện thoại Android của chính bạn.
+Nếu không liên kết được, dùng chế độ cloud của Key Helper, dữ liệu JSON đáng
+tin cậy hoặc trích xuất riêng tư từ điện thoại Android của chính bạn.
 
 ### Nhập dữ liệu JSON
 
