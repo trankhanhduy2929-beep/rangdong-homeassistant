@@ -152,6 +152,8 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             if not license_status["valid"]:
                 return await self.async_step_license()
         self._connection_type = CONNECTION_LOCAL
+        if user_input is None:
+            return await self.async_step_local_scan()
         return await self.async_step_local_device(user_input)
 
     @staticmethod
