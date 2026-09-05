@@ -142,7 +142,7 @@ class HelperController:
             return {
                 "success": True,
                 "cloud": self._cloud.status(),
-                "message": "Đã xóa APK và thư viện cloud khỏi add-on.",
+                "message": "Đã xóa APK nhập tay và cache. Bản tích hợp sẵn vẫn dùng được.",
             }
 
     async def cloud_scan(self, credentials: dict[str, str]) -> dict[str, Any]:

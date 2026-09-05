@@ -1,5 +1,12 @@
 # Nhật ký thay đổi
 
+## 0.2.1 - 2026-09-05
+
+- Tích hợp sẵn cặp APK 5.7.2 trong image: mở add-on, nhập tài khoản và lấy key ngay.
+- Không còn yêu cầu chọn hoặc tải lên hai APK; lần chạy đầu tự chuẩn bị thư viện.
+- Tải tài nguyên lúc build, kiểm tra SHA-256 và giới hạn kích thước.
+- Giữ import thủ công trong mục nâng cao; xóa cache không xóa bộ đăng nhập sẵn.
+
 ## 0.2.0 - 2026-09-05
 
 - Thêm đăng nhập cloud bằng tài khoản Rạng Đông, không cần Android root hay Tuya IoT project.

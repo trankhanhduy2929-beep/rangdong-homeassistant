@@ -19,9 +19,13 @@ bên thứ ba sau:
   thông báo gói tại `/usr/share/doc` trong image. Maven/Temurin chỉ dùng ở
   giai đoạn build, không sao chép nguyên môi trường Maven vào image chạy.
 
-APK Rạng Đông và thư viện của hãng **không được phân phối trong image/kho**.
-Người dùng cung cấp riêng cặp APK được phép sử dụng; quyền của nhà sản xuất
-vẫn áp dụng với các tệp này.
+Từ 0.2.1, cặp APK Rạng Đông 5.7.2 do chủ dự án cung cấp được giữ nguyên trong
+bản tài nguyên `native-resources-5.7.2` và tải vào image lúc build. Không đưa
+binary vào lịch sử Git; chữ ký/checksum APK không thay đổi. APK và thư viện
+của hãng không thuộc giấy phép MIT của helper; mọi quyền của nhà sản xuất
+vẫn được giữ nguyên. Đây không phải ứng dụng/tích hợp chính thức của Rạng Đông.
+Không có tài khoản, mật khẩu đăng nhập, phiên hoặc local key thiết bị trong
+các APK tài nguyên này. Image không chứa dữ liệu của tài khoản thử nghiệm.
 
 ## Frida Java bridge 7.0.13
 

@@ -39,8 +39,8 @@ xác thực QR cũ làm lựa chọn dự phòng.
 
 ## Giới hạn quan trọng
 
-**Đăng nhập cloud không cần Android:** add-on **0.2.0** kết hợp tích hợp
-**0.2.5** có giao diện tải APK, đăng nhập Rạng Đông và chuyển local key vào
+**Đăng nhập cloud không cần Android:** add-on **0.2.1** kết hợp tích hợp
+**0.2.6** có sẵn bộ đăng nhập Rạng Đông và chuyển local key vào
 Home Assistant. Nghiên cứu đã lấy được key của 9 thiết bị bằng email.
 Không cần điện thoại root hoặc Tuya IoT project. Chưa kiểm thử điều khiển LAN
 trên các thiết bị thật đó. Xem [hướng dẫn cloud](rangdong_key_helper/DOCS.md).
@@ -82,18 +82,18 @@ Kho GitHub này đồng thời là một kho ứng dụng Home Assistant:
    ```
 
 2. Cài **Rạng Đông Key Helper** và khởi động ứng dụng thủ công.
-3. Cập nhật tích hợp lên **0.2.5**, khởi động lại Home Assistant trước khi lấy key.
-4. Mở giao diện web helper → mục **Cloud**. Tải lên hai APK Rạng Đông 5.7.2
-   được hỗ trợ theo [hướng dẫn](rangdong_key_helper/DOCS.md).
+3. Cập nhật tích hợp lên **0.2.6**, khởi động lại Home Assistant trước khi lấy key.
+4. Mở giao diện web helper → mục **Cloud**. Bộ đăng nhập đã có sẵn;
+   **không cần import APK**. Xem [hướng dẫn](rangdong_key_helper/DOCS.md).
 5. Nhập email và mật khẩu tài khoản **Rạng Đông**, rồi bấm đăng nhập lấy key.
    Không nhập mật khẩu Google; không cần quét QR hay Android.
 6. Quay lại **Thêm tích hợp → Rạng Đông Smart → LAN nội bộ → Key Helper / bridge**
    và chọn Device ID đã import.
 
 Mục **Android** là phương án bổ sung, chỉ mục này mới cần root và ADB.
-Cloud chạy thư viện native từ APK do bạn cung cấp trong worker Linux riêng.
-APK được kiểm tra SHA-256 trước khi dùng; không đóng gói APK hay bí mật ứng dụng
-vào image/GitHub. Tài khoản, mật khẩu và phiên cloud không được lưu vào options
+Cloud chạy thư viện native trong worker Linux riêng. Từ add-on 0.2.1, APK gốc
+đã được đóng gói sẵn và kiểm tra SHA-256 lúc build/trước khi chuẩn bị.
+Tài khoản, mật khẩu và phiên cloud không được lưu vào image, GitHub, options
 hay log. iPhone có thể mở Ingress từ xa qua HTTPS; Home Assistant vẫn phải
 truy cập được mạng LAN của thiết bị để điều khiển local.
 
@@ -128,8 +128,8 @@ Mỗi thiết bị được tạo thành một mục cấu hình (config entry) 
 
 Ứng dụng chính thức thường không hiển thị local key. Các nguồn được hỗ trợ gồm:
 
-- đăng nhập Rạng Đông bằng email trong **Key Helper 0.2.0**, dùng cặp APK được
-  hỗ trợ, không cần Android hoặc Tuya IoT project;
+- đăng nhập Rạng Đông bằng email trong **Key Helper 0.2.1**, không cần nhập APK,
+  Android hoặc Tuya IoT project;
 - bản dữ liệu thiết bị Tuya/Rạng Đông đã xuất từ nguồn được cấp quyền hoặc một tích hợp local
   hiện có đã chứa key;
 - thông tin thiết bị trong Tuya developer/cloud project do bạn quản lý; hoặc

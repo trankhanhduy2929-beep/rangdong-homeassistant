@@ -70,7 +70,7 @@
           "device_id": "Device ID to match",
           "bridge_refresh": "Refresh key list"
         },
-        "description": "Open the Rạng Đông Key Helper add-on, upload the supported APKs and sign in to your Rạng Đông cloud account without a rooted phone. The add-on sends keys to {endpoint}. The existing Android/Frida mode is also available. Keys remain in memory; the list endpoint never returns raw keys."
+        "description": "Open Rạng Đông Key Helper 0.2.1 or newer and sign in to your Rạng Đông account. Login resources are included: no APK uploads, rooted phone or Tuya IoT project needed. The add-on sends keys to {endpoint}. Keys remain in memory; the list endpoint never returns raw keys."
       },
       "local_key_device": {
         "data": {

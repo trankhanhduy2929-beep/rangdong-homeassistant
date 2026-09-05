@@ -2,12 +2,21 @@
 
 ## Cloud: không cần Android hoặc Tuya IoT project
 
-Yêu cầu Home Assistant OS có tích hợp Rạng Đông Smart **0.2.5**, add-on
-**0.2.0**, máy amd64 hoặc aarch64 và kết nối Internet. Khởi động lại Home
+Yêu cầu Home Assistant OS có tích hợp Rạng Đông Smart **0.2.5 trở lên** (khuyên
+dùng **0.2.6** để cập nhật hướng dẫn trên giao diện), add-on
+**0.2.1**, máy amd64 hoặc aarch64 và kết nối Internet. Khởi động lại Home
 Assistant sau khi cập nhật tích hợp. Không cần điền mục cấu hình Android.
 
 1. Mở **Rạng Đông Key Helper → Mở giao diện web** bằng tài khoản HA quản trị.
-2. Ở mục Cloud, chọn base `com.rd.smart.apk` và split `config.armeabi_v7a.apk`
+2. Nhập email/mật khẩu Rạng Đông → **Đăng nhập cloud và lấy key**. Không cần APK.
+3. Thêm tích hợp → LAN nội bộ → **Key Helper / bridge**, chọn thiết bị và IP.
+
+Bộ tài nguyên đã tích hợp trong image từ 0.2.1. Lần đầu tự chuẩn bị thư viện;
+chờ tối đa 240 giây. Không tải APK khi đăng nhập, không cần điện thoại Android.
+
+### Nâng cao: import APK thủ công (không bắt buộc)
+
+Nếu dùng image tự build không có bộ sẵn, chọn base `com.rd.smart.apk` và split `config.armeabi_v7a.apk`
    của Rạng Đông **5.7.2**, rồi bấm tải APK. Chỉ chấp nhận đúng hai SHA-256:
 
    | Tệp | SHA-256 |
@@ -15,13 +24,13 @@ Assistant sau khi cập nhật tích hợp. Không cần điền mục cấu hì
    | Base | `67c0fb602b55031117a09b4c0429be1270f60c8bf49e73dfec2b1aa6dbb43f8d` |
    | armeabi-v7a | `7b72cab2b62ab5835a4e96ec38076fc08ab8899cca6ec1c43679d3a3ad4e6060` |
 
-   Dùng APK bạn sở hữu/được phép sử dụng. Kho không phân phối APK của hãng.
+   Dùng APK bạn sở hữu/được phép sử dụng. Bản 0.2.1 đã có sẵn cặp này.
    Có thể chép cặp APK đã dùng nghiên cứu vào ứng dụng **Tệp** trên iPhone và
    chọn từ trình duyệt; không cài APK lên iPhone. APK phiên bản khác bị từ chối.
-3. Nhập **email đăng ký Rạng Đông**, mật khẩu Rạng Đông và mã quốc gia `84`.
+Sau khi tải thủ công, nhập **email đăng ký Rạng Đông**, mật khẩu Rạng Đông và mã quốc gia `84`.
    Đây không phải mật khẩu Gmail/Google. Bấm **Đăng nhập** và chờ tối đa 240 giây.
-4. Danh sách trả về chỉ hiển thị key đã che; key thật tự chuyển vào bridge HA.
-5. Mở **Cài đặt → Thiết bị & dịch vụ → Thêm tích hợp → Rạng Đông Smart →
+Danh sách trả về chỉ hiển thị key đã che; key thật tự chuyển vào bridge HA.
+Mở **Cài đặt → Thiết bị & dịch vụ → Thêm tích hợp → Rạng Đông Smart →
    LAN nội bộ → Key Helper / bridge**, chọn thiết bị và IP. Tích hợp kiểm tra
    key với thiết bị LAN trước khi lưu. Cấu hình DP theo thiết bị.
 
@@ -35,15 +44,16 @@ iPhone có thể khác mạng nếu mở HA qua HTTPS đáng tin cậy. **Home A
 truy cập được mạng LAN thiết bị**; cloud không thay thế đường kết nối local.
 
 Mật khẩu chỉ dùng tạm trong RAM/pipe đến worker; không lưu account/session vào
-options hay log. APK và tài nguyên native nằm riêng trong `/data/cloud`, quyền
-0700/0600; nút xóa APK xóa cả tài nguyên đã trích xuất. Backup add-on có thể chứa
+options hay log. APK tích hợp nằm ở `/opt/rangdong-apk`; APK nhập tay và cache
+nằm trong `/data/cloud`, quyền 0700/0600. Nút xóa chỉ xóa bản nhập tay và cache,
+không xóa tài nguyên gốc trong image. Backup add-on có thể chứa
 APK/tài nguyên ứng dụng nên cũng cần bảo vệ. Key bridge chỉ tạm trong RAM; sau
 khi cấu hình local, Home Assistant lưu key theo cơ chế cấu hình tích hợp.
 Không gửi log chứa bí mật hoặc ảnh key lên issue. Chỉ dùng với tài khoản của bạn.
 
 Nếu danh sách bridge mất do HA khởi động lại, đăng nhập lấy key lại. Nút
 **Xóa key tạm khỏi bridge** nằm trong mục Android bổ sung, dùng được cho cả cloud.
-Nếu còn giao diện chỉ yêu cầu root, kiểm tra add-on đã lên **0.2.0**, dừng/khởi
+Nếu còn yêu cầu import hai APK, kiểm tra add-on đã lên **0.2.1**, dừng/khởi
 động lại add-on và tải lại trang; cập nhật HACS không tự cập nhật add-on.
 
 ## Android: phương án bổ sung

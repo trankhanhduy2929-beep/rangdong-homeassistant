@@ -38,6 +38,30 @@ def test_untrusted_apk_rejected(tmp_path: Path) -> None:
         verify_apk(candidate, "base")
 
 
+def test_bundled_assets_work_without_upload_and_survive_reset(tmp_path: Path) -> None:
+    async def exercise() -> None:
+        bundled = tmp_path / "bundled"
+        bundled.mkdir()
+        for name in ("base.apk", "abi.apk"):
+            (bundled / name).write_bytes(b"fixture")
+        private = tmp_path / "private"
+        cloud = CloudClient(root=private, bundled_root=bundled)
+        assert cloud.status()["bundled"] is True
+        assert cloud.status()["base_uploaded"] is True
+        private.mkdir()
+        (private / "base.apk").write_bytes(b"partial override")
+        assert cloud._asset_root() == bundled
+        (private / "abi.apk").write_bytes(b"complete override")
+        assert cloud._asset_root() == private
+        (private / "prepared").mkdir()
+        await cloud.clear_assets()
+        assert not (private / "prepared").exists()
+        assert cloud._asset_root() == bundled
+        assert (bundled / "base.apk").read_bytes() == b"fixture"
+
+    asyncio.run(exercise())
+
+
 def test_upload_rejection_cleans_temporary_files(tmp_path: Path) -> None:
     class Stream:
         async def iter_chunked(self, size):

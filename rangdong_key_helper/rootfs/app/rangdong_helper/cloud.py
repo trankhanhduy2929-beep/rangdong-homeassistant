@@ -46,20 +46,33 @@ class CloudClient:
         self,
         root: Path = Path("/data/cloud"),
         classpath: str = "/app/native/classes:/app/native/lib/*",
+        bundled_root: Path = Path("/opt/rangdong-apk"),
     ) -> None:
         self.root = root
         self.classpath = classpath
+        self.bundled_root = bundled_root
         self.process: asyncio.subprocess.Process | None = None
         self._last_attempt = 0.0
 
     def status(self) -> dict[str, Any]:
+        assets = self._asset_root()
         return {
             "supported": platform.machine().lower()
             in {"x86_64", "amd64", "aarch64", "arm64"},
-            "base_uploaded": (self.root / "base.apk").is_file(),
-            "abi_uploaded": (self.root / "abi.apk").is_file(),
+            "base_uploaded": (assets / "base.apk").is_file(),
+            "abi_uploaded": (assets / "abi.apk").is_file(),
+            "bundled": assets == self.bundled_root,
             "apk_version": "5.7.2",
         }
+
+    def _asset_root(self) -> Path:
+        if all((self.root / name).is_file() for name in ("base.apk", "abi.apk")):
+            return self.root
+        if all(
+            (self.bundled_root / name).is_file() for name in ("base.apk", "abi.apk")
+        ):
+            return self.bundled_root
+        return self.root
 
     def _mkdir(self) -> None:
         self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -111,13 +124,14 @@ class CloudClient:
         self._last_attempt = time.monotonic()
         self._mkdir()
         prepared = self.root / "prepared"
+        assets = self._asset_root()
         if not prepared.exists():
             temporary = Path(tempfile.mkdtemp(prefix="prepare-", dir=self.root))
             task = asyncio.create_task(
                 asyncio.to_thread(
                     prepare_assets,
-                    self.root / "base.apk",
-                    self.root / "abi.apk",
+                    assets / "base.apk",
+                    assets / "abi.apk",
                     temporary / "assets",
                 )
             )

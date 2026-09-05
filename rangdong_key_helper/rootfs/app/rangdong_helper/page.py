@@ -53,16 +53,18 @@ PAGE_TEMPLATE = r"""<!doctype html>
 
   <section class="card">
     <h2>Cloud — không cần điện thoại Android</h2>
-    <p>Tải lên 2 file APK Rạng Đông 5.7.2 đã hỗ trợ. APK chỉ dùng để chạy thư viện ký request; không cài trên iPhone. Không cần Tuya IoT project.</p>
+    <p>Đã tích hợp sẵn phương thức lấy key. Chỉ cần nhập tài khoản Rạng Đông và bấm đăng nhập; không cần tải APK, Android hay Tuya IoT project.</p>
+    <p id="cloudStatus" class="small">Đang kiểm tra bộ đăng nhập…</p>
+    <details><summary>Cài đặt nâng cao</summary>
+    <label>Mã quốc gia<input id="cloudCountry" value="84" inputmode="numeric"></label>
     <p class="small">Chỉ chấp nhận đúng bản APK có checksum trong Hướng dẫn add-on. Nếu APK khác, hệ thống dừng thay vì chạy thư viện không rõ nguồn gốc.</p>
     <div class="grid">
       <label>Base com.rd.smart.apk<input id="cloudBase" type="file" accept=".apk"></label>
       <label>Split config.armeabi_v7a.apk<input id="cloudAbi" type="file" accept=".apk"></label>
     </div>
-    <div class="buttons"><button id="cloudUpload">Tải lên và kiểm tra APK</button><button id="cloudClear" class="danger">Xóa APK đã lưu</button></div>
-    <p id="cloudStatus" class="small">Đang đọc trạng thái APK…</p>
+    <div class="buttons"><button id="cloudUpload">Tải lên và kiểm tra APK</button><button id="cloudClear" class="danger">Xóa bản nhập tay và cache</button></div>
+    </details>
     <div class="grid">
-      <label>Mã quốc gia<input id="cloudCountry" value="84" inputmode="numeric"></label>
       <label>Email hoặc số điện thoại Rạng Đông<input id="cloudAccount" autocomplete="off" spellcheck="false"></label>
       <label>Mật khẩu Rạng Đông<input id="cloudPassword" type="password" autocomplete="off"></label>
     </div>
@@ -161,6 +163,10 @@ PAGE_TEMPLATE = r"""<!doctype html>
 
   function renderCloud(cloud) {
     if (!cloud) return;
+    if (cloud.bundled && cloud.supported !== false) {
+      elements.cloudStatus.textContent = "Bộ đăng nhập đã có sẵn — anh chỉ cần đăng nhập.";
+      return;
+    }
     elements.cloudStatus.textContent = `Base: ${cloud.base_uploaded ? "đã có" : "chưa có"} · ABI: ${cloud.abi_uploaded ? "đã có" : "chưa có"} · APK ${cloud.apk_version || "5.7.2"}`;
     if (cloud.supported === false) elements.cloudStatus.textContent += " · Kiến trúc chưa hỗ trợ cloud";
   }

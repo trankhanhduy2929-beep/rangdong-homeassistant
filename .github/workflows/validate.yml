@@ -51,9 +51,11 @@ jobs:
         run: |
           ruff check \
             rangdong_key_helper/rootfs/app/rangdong_helper \
+            rangdong_key_helper/build \
             rangdong_key_helper/tests
           ruff format --check \
             rangdong_key_helper/rootfs/app/rangdong_helper \
+            rangdong_key_helper/build \
             rangdong_key_helper/tests
           pytest -q rangdong_key_helper/tests
 

@@ -35,6 +35,8 @@ RUN pip install --no-cache-dir --requirement /tmp/requirements.txt
 
 COPY LICENSE THIRD_PARTY_NOTICES.md LICENSE.frida.txt /usr/share/doc/rangdong-key-helper/
 COPY rootfs/app /app
+COPY build/download_apks.py /tmp/download_apks.py
+RUN PYTHONPATH=/app python3 /tmp/download_apks.py
 COPY --from=native-build /build/target/classes /app/native/classes
 COPY --from=native-build /build/target/lib /app/native/lib
 RUN java -cp '/app/native/classes:/app/native/lib/*' local.rangdong.BackendSmoke

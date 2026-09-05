@@ -1,5 +1,5 @@
 name: Rạng Đông Key Helper
-version: "0.2.0"
+version: "0.2.1"
 slug: rangdong_key_helper
 description: Đăng nhập cloud Rạng Đông lấy local key không cần Android root; có chế độ ADB/Frida dự phòng
 url: https://github.com/trankhanhduy2929-beep/rangdong-homeassistant/tree/main/rangdong_key_helper

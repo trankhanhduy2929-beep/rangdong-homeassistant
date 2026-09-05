@@ -70,7 +70,7 @@
           "device_id": "Device ID để đối chiếu",
           "bridge_refresh": "Làm mới danh sách key"
         },
-        "description": "Mở add-on Rạng Đông Key Helper, tải APK được hỗ trợ và đăng nhập email Rạng Đông để lấy key không cần Android root. Add-on chuyển key tới {endpoint}. Hoặc dùng chế độ Android/Frida cũ. Home Assistant giữ key trong bộ nhớ; danh sách không trả key thô."
+        "description": "Mở add-on Rạng Đông Key Helper 0.2.1 trở lên và đăng nhập tài khoản Rạng Đông. Bộ đăng nhập đã tích hợp sẵn: không cần import APK, Android root hoặc Tuya IoT project. Add-on tự chuyển key tới {endpoint}. Home Assistant giữ key trong bộ nhớ; danh sách không trả key thô."
       },
       "local_key_device": {
         "data": {
