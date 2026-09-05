@@ -12,11 +12,14 @@ from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
     ConfigFlow,
     ConfigFlowResult,
+    OptionsFlow,
 )
 from homeassistant.const import CONF_DEVICE_ID, CONF_HOST, CONF_NAME
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 from tuya_sharing import LoginControl
 
+from . import license_config
 from .const import (
     CONF_ACCESS_ID,
     CONF_ACCESS_SECRET,
@@ -66,6 +69,7 @@ from .key_sources import (
     parse_local_key_export,
     records_from_existing_cloud_devices,
 )
+from .licensing import manager as license_manager
 from .local import (
     DiscoveredLocalDevice,
     RangDongLocalAuthError,
@@ -83,6 +87,35 @@ def build_qr_payload(qr_token: str) -> str:
     """Build the QR payload accepted by the ThingClips scanner."""
 
     return f"{QR_PAYLOAD_PREFIX}{qr_token}"
+
+
+class RangDongLicenseOptionsFlow(OptionsFlow):
+    async def async_step_init(self, user_input=None) -> ConfigFlowResult:
+        status = await license_manager(self.hass).check(
+            key=user_input.get("license_key") if user_input else None
+        )
+        if user_input and status["valid"]:
+            return self.async_create_entry(title="", data={})
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("license_key"): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD
+                        )
+                    )
+                }
+            ),
+            errors={"base": "license_invalid"}
+            if user_input and not status["valid"]
+            else {},
+            description_placeholders={
+                "buy_url": status["buy_url"]
+                or "Chủ dự án chưa cấu hình website license",
+                "status": status["status"],
+            },
+        )
 
 
 class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -114,6 +147,10 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         """Choose local LAN setup or the legacy QR flow."""
 
         self._ensure_key_bridge_registered()
+        if license_config.ENFORCE:
+            license_status = await license_manager(self.hass).check()
+            if not license_status["valid"]:
+                return await self.async_step_license()
         if user_input is None:
             return self._show_connection_type_form()
 
@@ -125,6 +162,38 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_local_scan()
 
         return await self.async_step_cloud_qr()
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return RangDongLicenseOptionsFlow()
+
+    async def async_step_license(self, user_input=None) -> ConfigFlowResult:
+        status = await license_manager(self.hass).check(
+            key=user_input.get("license_key") if user_input else None
+        )
+        if user_input and status["valid"]:
+            return await self.async_step_user()
+        return self.async_show_form(
+            step_id="license",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("license_key"): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD
+                        )
+                    )
+                }
+            ),
+            errors={"base": "license_invalid"}
+            if user_input and not status["valid"]
+            else {},
+            description_placeholders={
+                "buy_url": status["buy_url"]
+                or "Chủ dự án chưa cấu hình website license",
+                "status": status["status"],
+            },
+        )
 
     async def async_step_local_scan(
         self, user_input: dict[str, Any] | None = None

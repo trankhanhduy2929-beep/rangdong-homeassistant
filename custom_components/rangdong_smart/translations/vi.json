@@ -17,7 +17,8 @@
       "local_key_device_mismatch": "Local key đã chọn thuộc Device ID khác. Hãy chọn đúng thiết bị trong export hoặc bắt đầu lại.",
       "local_key_not_found": "Không tìm thấy local key dùng được cho Device ID này.",
       "local_setup_error": "Không cấu hình được thiết bị local. Kiểm tra IP, Device ID, local key và phiên bản giao thức.",
-      "login_error": "Lỗi ủy quyền ({code}): {msg}"
+      "login_error": "Lỗi ủy quyền ({code}): {msg}",
+      "license_invalid": "License không hợp lệ hoặc server chưa sẵn sàng. Kiểm tra key và thử lại."
     },
     "step": {
       "user": {
@@ -118,6 +119,13 @@
           "protocol_version": "Phiên bản giao thức"
         },
         "description": "Cập nhật địa chỉ IP hoặc local key rồi kiểm tra kết nối LAN trước khi tải lại entry."
+      },
+      "license": {
+        "title": "License",
+        "description": "Trạng thái: {status}. Mua hoặc xem key: {buy_url}. Một license dùng cho một Home Assistant, một add-on và một custom. Thiết bị LAN đã cấu hình không bị ngắt bởi license.",
+        "data": {
+          "license_key": "License Key"
+        }
       }
     }
   },
@@ -132,10 +140,24 @@
       "options": {
         "existing_cloud": "Cloud entry đã xác thực",
         "json_export": "Import JSON export",
-        "android_bridge": "Key Helper / bridge (cloud hoặc Android)",
+        "android_bridge": "Key Helper / bridge",
         "manual": "Nhập local key thủ công",
         "tuya_cloud": "Lấy một lần từ Tuya Cloud"
       }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "License",
+        "description": "Trạng thái: {status}. Mua hoặc xem key: {buy_url}. Một license dùng cho một Home Assistant, một add-on và một custom. Thiết bị LAN đã cấu hình không bị ngắt bởi license.",
+        "data": {
+          "license_key": "License Key"
+        }
+      }
+    },
+    "error": {
+      "license_invalid": "License không hợp lệ hoặc server chưa sẵn sàng. Kiểm tra key và thử lại."
     }
   }
 }

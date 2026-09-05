@@ -17,7 +17,8 @@
       "local_key_device_mismatch": "The selected local key belongs to a different Device ID. Select the matching imported device or start again.",
       "local_key_not_found": "No usable local key was found for this Device ID.",
       "local_setup_error": "The local device could not be configured. Check the IP, device ID, local key and protocol version.",
-      "login_error": "Authorization error ({code}): {msg}"
+      "login_error": "Authorization error ({code}): {msg}",
+      "license_invalid": "License is invalid or the server is unavailable. Check the key and retry."
     },
     "step": {
       "user": {
@@ -118,6 +119,13 @@
           "protocol_version": "Protocol version"
         },
         "description": "Update the IP address or local key, then verify direct LAN access before reloading the entry."
+      },
+      "license": {
+        "title": "License",
+        "description": "Status: {status}. Buy or view keys: {buy_url}. One license binds one HA installation with one add-on and one custom slot. Existing LAN devices are not interrupted by licensing.",
+        "data": {
+          "license_key": "License Key"
+        }
       }
     }
   },
@@ -132,10 +140,24 @@
       "options": {
         "existing_cloud": "Existing authorized cloud entry",
         "json_export": "Import JSON export",
-        "android_bridge": "Key Helper / bridge (cloud or Android)",
+        "android_bridge": "Key Helper / bridge",
         "manual": "Enter local key manually",
         "tuya_cloud": "Fetch once from Tuya Cloud"
       }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "License",
+        "description": "Status: {status}. Buy or view keys: {buy_url}. One license binds one HA installation with one add-on and one custom slot. Existing LAN devices are not interrupted by licensing.",
+        "data": {
+          "license_key": "License Key"
+        }
+      }
+    },
+    "error": {
+      "license_invalid": "License is invalid or the server is unavailable. Check the key and retry."
     }
   }
 }
