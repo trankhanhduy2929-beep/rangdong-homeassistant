@@ -150,19 +150,25 @@ class LicenseManager:
             now = int(time.time())
             last_attempt = state.setdefault("last_attempt", {}).get(slot, 0)
             refresh_interval = 300
-            if key is None and cached and now - cached["iat"] < refresh_interval:
+            if cached and now - cached["iat"] < refresh_interval:
                 return {
                     **base,
                     "valid": True,
                     "status": "active",
                     "expires_at": cached["exp"],
                 }
-            if now - last_attempt < 60:
+            explicit_attempt = state.get("last_key_attempt", 0)
+            if (key is None and now - last_attempt < 60) or (
+                key is not None and now - explicit_attempt < 5
+            ):
                 return {
                     **base,
                     "valid": False,
                     "status": "retry_later",
+                    "retry_after": max(1, int((60 - (now - last_attempt)) if key is None else (5 - (now - explicit_attempt)))),
                 }
+            if key is not None:
+                state["last_key_attempt"] = now
             state["last_attempt"][slot] = now
             payload = {
                 "key": candidate,
