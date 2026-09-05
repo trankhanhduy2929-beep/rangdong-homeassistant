@@ -122,9 +122,16 @@
       },
       "license": {
         "title": "License",
-        "description": "Trạng thái: {status}. Mua hoặc xem key: {buy_url}. Một license dùng cho một Home Assistant, một add-on và một custom. Thiết bị LAN đã cấu hình không bị ngắt bởi license.",
+        "description": "Trạng thái: {status}. Gia hạn hoặc mua key: {buy_url}. License dùng cho một Home Assistant. Khi hết hạn, điều khiển bị khóa nhưng cấu hình được giữ nguyên.",
         "data": {
           "license_key": "License Key"
+        }
+      },
+      "local_discovered_key": {
+        "title": "Nhập local key",
+        "description": "Thiết bị: {name}\n\nDevice ID: {device_id}\n\nIP: {host}\n\nProduct ID: {product_id}\n\nChỉ nhập local key. Tích hợp sẽ tự kiểm tra giao thức và kết nối. Product ID không phải tên loại thiết bị.",
+        "data": {
+          "local_key": "Local key"
         }
       }
     }
@@ -150,7 +157,7 @@
     "step": {
       "init": {
         "title": "License",
-        "description": "Trạng thái: {status}. Mua hoặc xem key: {buy_url}. Một license dùng cho một Home Assistant, một add-on và một custom. Thiết bị LAN đã cấu hình không bị ngắt bởi license.",
+        "description": "Trạng thái: {status}. Gia hạn hoặc mua key: {buy_url}. License dùng cho một Home Assistant. Khi hết hạn, điều khiển bị khóa nhưng cấu hình được giữ nguyên.",
         "data": {
           "license_key": "License Key"
         }

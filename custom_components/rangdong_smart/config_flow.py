@@ -137,6 +137,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         self._local_product_id = ""
         self._local_protocol_version = DEFAULT_PROTOCOL_VERSION
         self._local_scan_error = False
+        self._selected_lan_device = False
         self._existing_cloud_records: dict[str, LocalKeyRecord] = {}
         self._key_records: dict[str, LocalKeyRecord] = {}
         self._pending_key_record: LocalKeyRecord | None = None
@@ -152,9 +153,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             if not license_status["valid"]:
                 return await self.async_step_license()
         self._connection_type = CONNECTION_LOCAL
-        if user_input is None:
-            return await self.async_step_local_scan()
-        return await self.async_step_local_device(user_input)
+        return await self.async_step_local_scan()
 
     @staticmethod
     @callback
@@ -237,15 +236,20 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         selected_id = str(user_input.get(CONF_DISCOVERED_DEVICE, DISCOVERY_MANUAL))
         discovered = self._local_devices.get(selected_id)
         if discovered is None:
+            self._selected_lan_device = False
             self._local_device_id = ""
             self._local_host = ""
             self._local_name = ""
             self._local_product_id = ""
             self._local_protocol_version = DEFAULT_PROTOCOL_VERSION
         else:
+            self._selected_lan_device = True
             self._local_device_id = discovered.device_id
             self._local_host = discovered.host
             self._local_name = discovered.name or ""
+            bridge_record = get_key_bridge_records(self.hass).get(discovered.device_id)
+            if bridge_record and bridge_record.name:
+                self._local_name = bridge_record.name
             self._local_product_id = discovered.product_id or ""
             self._local_protocol_version = (
                 discovered.protocol_version or DEFAULT_PROTOCOL_VERSION
@@ -389,6 +393,14 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
 
         errors: dict[str, str] = {}
         if user_input is not None:
+            if self._selected_lan_device:
+                user_input = {
+                    CONF_DEVICE_ID: self._local_device_id,
+                    CONF_HOST: self._local_host,
+                    CONF_NAME: self._local_name,
+                    CONF_PROTOCOL_VERSION: DEFAULT_PROTOCOL_VERSION,
+                    CONF_LOCAL_KEY: user_input.get(CONF_LOCAL_KEY, ""),
+                }
             selected_source = str(
                 user_input.get(CONF_LOCAL_KEY_SOURCE, LOCAL_KEY_SOURCE_MANUAL)
             )
@@ -440,6 +452,11 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = error
 
         return self._show_local_device_form(errors=errors, user_input=user_input)
+
+    async def async_step_local_discovered_key(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_local_device(user_input)
 
     def _ensure_key_bridge_registered(self) -> None:
         """Register the bridge while a first-time config flow is active."""
@@ -741,6 +758,23 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Render local device credentials and protocol settings."""
+
+        if self._selected_lan_device:
+            return self.async_show_form(
+                step_id="local_discovered_key",
+                data_schema=vol.Schema({
+                    vol.Required(CONF_LOCAL_KEY): selector.TextSelector(
+                        selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+                    ),
+                }),
+                errors=errors or {},
+                description_placeholders={
+                    "name": self._local_name or f"Rạng Đông / Tuya {self._local_device_id[-6:]}",
+                    "device_id": self._local_device_id,
+                    "host": self._local_host,
+                    "product_id": self._local_product_id or "—",
+                },
+            )
 
         values = user_input or {}
         device_id = str(values.get(CONF_DEVICE_ID, self._local_device_id))

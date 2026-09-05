@@ -45,6 +45,7 @@ from .const import (
 )
 from .coordinator import RangDongLocalCoordinator
 from .key_bridge import register_key_bridge
+from .licensing import manager as license_manager
 from .local import RangDongLocalAuthError, RangDongLocalClient
 
 LOGGER = logging.getLogger(__package__)
@@ -193,6 +194,9 @@ async def _async_send_command(call: ServiceCall) -> None:
             return
 
         if device_id in runtime.manager.device_map:
+            status = await license_manager(call.hass).check()
+            if not status.get("valid"):
+                raise HomeAssistantError("License Rạng Đông không hợp lệ. Hãy gia hạn trên website.")
             code = call.data.get("code")
             if not code:
                 raise HomeAssistantError("Legacy cloud control requires a DP code")
@@ -208,6 +212,10 @@ async def _async_send_command(call: ServiceCall) -> None:
 
 async def async_setup_entry(hass: HomeAssistant, entry: RangDongConfigEntry) -> bool:
     """Set up either a local device or a legacy QR account."""
+
+    status = await license_manager(hass).check()
+    if not status.get("valid"):
+        raise ConfigEntryNotReady("License Rạng Đông không hợp lệ. Hãy gia hạn trên website hoặc nhập key mới.")
 
     if is_local_entry(entry):
         return await _async_setup_local_entry(hass, entry)
@@ -236,12 +244,15 @@ async def _async_setup_local_entry(
             f"Unable to initialize local Rạng Đông device {device_id}"
         ) from error
     coordinator = RangDongLocalCoordinator(hass, client)
+    entry.async_on_unload(coordinator.cancel_license_expiry)
     try:
         await coordinator.async_config_entry_first_refresh()
     except ConfigEntryAuthFailed:
+        coordinator.cancel_license_expiry()
         client.close()
         raise
     except Exception as error:
+        coordinator.cancel_license_expiry()
         client.close()
         raise ConfigEntryNotReady(
             f"Unable to reach local Rạng Đông device {client.device_id}"

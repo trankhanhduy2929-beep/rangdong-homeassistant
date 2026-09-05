@@ -122,9 +122,16 @@
       },
       "license": {
         "title": "License",
-        "description": "Status: {status}. Buy or view keys: {buy_url}. One license binds one HA installation with one add-on and one custom slot. Existing LAN devices are not interrupted by licensing.",
+        "description": "Status: {status}. Renew or buy a key: {buy_url}. A license binds one Home Assistant. Expiry locks control without deleting configuration.",
         "data": {
           "license_key": "License Key"
+        }
+      },
+      "local_discovered_key": {
+        "title": "Enter local key",
+        "description": "Device: {name}\n\nDevice ID: {device_id}\n\nIP: {host}\n\nProduct ID: {product_id}\n\nEnter only the local key. The integration checks the protocol and connection automatically. A product ID does not identify the device type by itself.",
+        "data": {
+          "local_key": "Local key"
         }
       }
     }
@@ -150,7 +157,7 @@
     "step": {
       "init": {
         "title": "License",
-        "description": "Status: {status}. Buy or view keys: {buy_url}. One license binds one HA installation with one add-on and one custom slot. Existing LAN devices are not interrupted by licensing.",
+        "description": "Status: {status}. Renew or buy a key: {buy_url}. A license binds one Home Assistant. Expiry locks control without deleting configuration.",
         "data": {
           "license_key": "License Key"
         }

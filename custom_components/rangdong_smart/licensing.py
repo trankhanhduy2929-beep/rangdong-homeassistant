@@ -1,4 +1,4 @@
-"""Installation-bound licensing, isolated from running device control."""
+"""Installation-bound licensing for setup and device control."""
 
 from __future__ import annotations
 
@@ -149,7 +149,7 @@ class LicenseManager:
                     cached = None
             now = int(time.time())
             last_attempt = state.setdefault("last_attempt", {}).get(slot, 0)
-            refresh_interval = 300 if component == "addon" else 3600
+            refresh_interval = 300
             if key is None and cached and now - cached["iat"] < refresh_interval:
                 return {
                     **base,
@@ -160,8 +160,8 @@ class LicenseManager:
             if now - last_attempt < 60:
                 return {
                     **base,
-                    "valid": bool(cached) if component != "addon" else False,
-                    "status": "offline_grace" if cached and component != "addon" else "retry_later",
+                    "valid": False,
+                    "status": "retry_later",
                 }
             state["last_attempt"][slot] = now
             payload = {
@@ -251,8 +251,8 @@ class LicenseManager:
                 await self._store.async_save(state)
                 return {
                     **base,
-                    "valid": bool(cached) if component != "addon" else False,
-                    "status": "offline_grace" if cached and component != "addon" else "server_unavailable",
+                    "valid": False,
+                    "status": "server_unavailable",
                 }
             finally:
                 payload.clear()
