@@ -144,24 +144,15 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Choose local LAN setup or the legacy QR flow."""
+        """Configure a device with its local key."""
 
         self._ensure_key_bridge_registered()
         if license_config.ENFORCE:
             license_status = await license_manager(self.hass).check()
             if not license_status["valid"]:
                 return await self.async_step_license()
-        if user_input is None:
-            return self._show_connection_type_form()
-
-        if CONF_CONNECTION_TYPE not in user_input and CONF_USER_CODE in user_input:
-            return await self.async_step_cloud_qr(user_input)
-
-        self._connection_type = user_input.get(CONF_CONNECTION_TYPE, CONNECTION_LOCAL)
-        if self._connection_type == CONNECTION_LOCAL:
-            return await self.async_step_local_scan()
-
-        return await self.async_step_cloud_qr()
+        self._connection_type = CONNECTION_LOCAL
+        return await self.async_step_local_device(user_input)
 
     @staticmethod
     @callback
@@ -883,17 +874,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
             )
         else:
-            source = str(values.get(CONF_LOCAL_KEY_SOURCE, LOCAL_KEY_SOURCE_MANUAL))
-            schema[vol.Required(CONF_LOCAL_KEY_SOURCE, default=source)] = (
-                selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=self._local_key_source_options(),
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                        translation_key="local_key_source",
-                    )
-                )
-            )
-            schema[vol.Optional(CONF_LOCAL_KEY)] = selector.TextSelector(
+            schema[vol.Required(CONF_LOCAL_KEY)] = selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
             )
         schema[

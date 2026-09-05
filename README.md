@@ -11,8 +11,8 @@ ADB, Frida, import APK hoặc Tuya IoT Cloud project.
 3. Chọn loại **Integration**, cài đặt và restart Home Assistant.
 4. Vào **Settings → Devices & services → Add integration**.
 5. Chọn **Rạng Đông Smart**.
-6. Chọn **LAN nội bộ**.
-7. Chọn **Key Helper / bridge** hoặc nhập Device ID, IP và local key.
+6. Nhập License Key nếu được yêu cầu.
+7. Nhập tên thiết bị, Device ID, địa chỉ IP, local key và phiên bản giao thức.
 
 ## License
 
@@ -25,8 +25,8 @@ lượt dùng thử trên cùng Home Assistant.
 
 ## Cấu hình thiết bị
 
-- **LAN nội bộ:** nhập/chọn Device ID, địa chỉ IP và local key.
-- Có thể dùng Key Helper để đăng nhập Rạng Đông và chuyển key an toàn qua bridge.
+- **LAN nội bộ:** nhập thủ công Device ID, địa chỉ IP và local key.
+- Có thể lấy các thông tin này từ add-on Key Helper rồi nhập vào custom integration.
 - Sau khi thêm thiết bị, đổi tên và khu vực trong Home Assistant như bình thường.
 - Đảm bảo Home Assistant và thiết bị cùng mạng LAN, không bị client isolation.
 
@@ -40,7 +40,7 @@ Integration hỗ trợ các entity và dịch vụ tương thích với thiết 
 - **Không tìm thấy thiết bị:** kiểm tra IP, VLAN, firewall và mạng LAN.
 - **Sai local key:** lấy lại key từ Key Helper, kiểm tra đúng Device ID.
 - **License lỗi:** kiểm tra key trên website và installation Home Assistant.
-- **QR báo designated app:** dùng LAN nội bộ/Key Helper thay vì quét QR.
+- Không cần quét QR hoặc đăng nhập cloud trong custom integration.
 
 Không nhập mật khẩu tài khoản Rạng Đông vào website license. Không chia sẻ local
 key hoặc License Key.
