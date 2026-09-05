@@ -46,6 +46,23 @@ class PrepareTests(unittest.TestCase):
             prepare(self.smali, self.apk, self.output)
         self.assertEqual(marker.read_text(), "existing")
 
+    def test_unrelated_twenty_character_string_is_ignored(self):
+        with self.smali.open("a", encoding="utf-8") as source:
+            source.write('const-string v2, "' + "C" * 20 + '"\n')
+        prepare(self.smali, self.apk, self.output)
+        self.assertEqual(
+            (self.output / "app-credentials").read_text(),
+            "A" * 20 + "\n" + "B" * 32 + "\n",
+        )
+
+    def test_ambiguous_pairs_fail_closed(self):
+        with self.smali.open("a", encoding="utf-8") as source:
+            source.write('const-string v2, "' + "C" * 20 + '"\n')
+            source.write('const-string v3, "' + "D" * 32 + '"\n')
+        with self.assertRaises(ValueError):
+            prepare(self.smali, self.apk, self.output)
+        self.assertFalse(self.output.exists())
+
     def test_unknown_credentials_fail_closed(self):
         self.smali.write_text("unrecognized layout", encoding="utf-8")
         with self.assertRaises(ValueError):

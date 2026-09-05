@@ -5,3 +5,9 @@ CHANGELOG.md
 translations/
 *.py[cod]
 __pycache__/
+native-cloud/target/
+native-cloud/classpath.txt
+**/*.apk
+**/*.so
+**/app-credentials
+**/private/

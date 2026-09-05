@@ -61,6 +61,29 @@ async def _test_page_requires_ingress_and_mutation_requires_csrf() -> None:
         )
         assert accepted.status == 200
         assert "cleared" in await accepted.text()
+
+        controller.cloud_scan = AsyncMock(return_value={"success": True, "count": 1})
+        cloud_rejected = await client.post(
+            "/api/cloud/login-scan",
+            headers=INGRESS_HEADERS,
+            json={"username": "test@example.invalid", "password": "test-password"},
+        )
+        assert cloud_rejected.status == 403
+        controller.cloud_scan.assert_not_called()
+        cloud_accepted = await client.post(
+            "/api/cloud/login-scan",
+            headers={**INGRESS_HEADERS, "X-CSRF-Token": csrf.group(1)},
+            json={"username": "test@example.invalid", "password": "test-password"},
+        )
+        assert cloud_accepted.status == 200
+        assert controller.cloud_scan.call_args.args[0] == {}
+
+        controller.upload_cloud_apk = AsyncMock(return_value={"success": True})
+        upload_rejected = await client.post(
+            "/api/cloud/apk/base", headers=INGRESS_HEADERS, data=b"apk"
+        )
+        assert upload_rejected.status == 403
+        controller.upload_cloud_apk.assert_not_called()
     finally:
         await client.close()
 

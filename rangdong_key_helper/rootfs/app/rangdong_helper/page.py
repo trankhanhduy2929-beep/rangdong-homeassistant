@@ -49,7 +49,28 @@ PAGE_TEMPLATE = r"""<!doctype html>
 <body>
 <main>
   <h1>Rạng Đông Key Helper</h1>
-  <p class="subtle">Dò local key từ chính app Rạng Đông trên điện thoại của bạn rồi import tạm vào Home Assistant.</p>
+  <p class="subtle">Đăng nhập cloud Rạng Đông để lấy local key và chuyển vào Home Assistant. Không cần Android root ở chế độ cloud.</p>
+
+  <section class="card">
+    <h2>Cloud — không cần điện thoại Android</h2>
+    <p>Tải lên 2 file APK Rạng Đông 5.7.2 đã hỗ trợ. APK chỉ dùng để chạy thư viện ký request; không cài trên iPhone. Không cần Tuya IoT project.</p>
+    <p class="small">Chỉ chấp nhận đúng bản APK có checksum trong Hướng dẫn add-on. Nếu APK khác, hệ thống dừng thay vì chạy thư viện không rõ nguồn gốc.</p>
+    <div class="grid">
+      <label>Base com.rd.smart.apk<input id="cloudBase" type="file" accept=".apk"></label>
+      <label>Split config.armeabi_v7a.apk<input id="cloudAbi" type="file" accept=".apk"></label>
+    </div>
+    <div class="buttons"><button id="cloudUpload">Tải lên và kiểm tra APK</button><button id="cloudClear" class="danger">Xóa APK đã lưu</button></div>
+    <p id="cloudStatus" class="small">Đang đọc trạng thái APK…</p>
+    <div class="grid">
+      <label>Mã quốc gia<input id="cloudCountry" value="84" inputmode="numeric"></label>
+      <label>Email hoặc số điện thoại Rạng Đông<input id="cloudAccount" autocomplete="off" spellcheck="false"></label>
+      <label>Mật khẩu Rạng Đông<input id="cloudPassword" type="password" autocomplete="off"></label>
+    </div>
+    <p class="small">Email + mật khẩu Rạng Đông, không phải mật khẩu Google. Đã kiểm chứng lấy key qua email. Mật khẩu không được lưu; mỗi lần bấm chỉ đăng nhập một lần, cách nhau ít nhất 60 giây. MFA/CAPTCHA phải xử lý trong app chính thức. Thiết bị LAN cần cùng mạng với Home Assistant, không cần cùng mạng iPhone.</p>
+    <div class="buttons"><button id="cloudLogin">Đăng nhập cloud và lấy key</button></div>
+  </section>
+
+  <details class="card"><summary>Chế độ dự phòng: Android root / Frida</summary>
 
   <section class="card warning">
     <strong>Yêu cầu bắt buộc:</strong> điện thoại Android đã root, bật Wireless debugging,
@@ -90,6 +111,7 @@ PAGE_TEMPLATE = r"""<!doctype html>
     </div>
   </section>
 
+  </details>
   <div id="message" role="status" aria-live="polite">Sẵn sàng.</div>
 
   <section class="card">
@@ -112,6 +134,8 @@ PAGE_TEMPLATE = r"""<!doctype html>
     "phone", "password", "pairButton", "prepareButton", "loginScanButton",
     "scanButton", "clearButton", "message", "deviceTable", "deviceBody",
     "emptyDevices",
+    "cloudBase", "cloudAbi", "cloudUpload", "cloudClear", "cloudStatus",
+    "cloudCountry", "cloudAccount", "cloudPassword", "cloudLogin",
   ].map((id) => [id, document.getElementById(id)]));
 
   elements.host.value = initialConfig.host || "";
@@ -133,6 +157,12 @@ PAGE_TEMPLATE = r"""<!doctype html>
   function showMessage(message, error = false) {
     elements.message.textContent = message;
     elements.message.classList.toggle("error", error);
+  }
+
+  function renderCloud(cloud) {
+    if (!cloud) return;
+    elements.cloudStatus.textContent = `Base: ${cloud.base_uploaded ? "đã có" : "chưa có"} · ABI: ${cloud.abi_uploaded ? "đã có" : "chưa có"} · APK ${cloud.apk_version || "5.7.2"}`;
+    if (cloud.supported === false) elements.cloudStatus.textContent += " · Kiến trúc chưa hỗ trợ cloud";
   }
 
   function renderDevices(devices) {
@@ -175,10 +205,12 @@ PAGE_TEMPLATE = r"""<!doctype html>
       const data = await action();
       showMessage(data.message || "Hoàn tất.");
       if (data.devices) renderDevices(data.devices);
+      if (data.cloud) renderCloud(data.cloud);
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Thao tác thất bại.", true);
     } finally {
       elements.password.value = "";
+      elements.cloudPassword.value = "";
       elements.pairCode.value = "";
       setBusy(false);
     }
@@ -202,9 +234,40 @@ PAGE_TEMPLATE = r"""<!doctype html>
   });
   elements.clearButton.addEventListener("click", () => run(() => api("api/bridge", undefined, "DELETE")));
 
+  elements.cloudLogin.addEventListener("click", () => {
+    const payload = {
+      username: elements.cloudAccount.value.trim(),
+      country_code: elements.cloudCountry.value.trim(),
+      password: elements.cloudPassword.value,
+    };
+    elements.cloudPassword.value = "";
+    run(async () => {
+      try { return await api("api/cloud/login-scan", payload); }
+      finally { payload.password = ""; }
+    });
+  });
+  elements.cloudClear.addEventListener("click", () => run(() => api("api/cloud/apk", undefined, "DELETE")));
+  elements.cloudUpload.addEventListener("click", () => run(async () => {
+    let result;
+    for (const [kind, input] of [["base", elements.cloudBase], ["abi", elements.cloudAbi]]) {
+      const file = input.files[0];
+      if (!file) continue;
+      showMessage(`Đang tải ${kind} APK…`);
+      const response = await fetch(`${path}api/cloud/apk/${kind}`, {
+        method: "POST", headers: { "X-CSRF-Token": csrfToken, "Content-Type": "application/octet-stream" }, body: file,
+      });
+      result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Tải APK thất bại.");
+      renderCloud(result.cloud);
+      input.value = "";
+    }
+    if (!result) throw new Error("Hãy chọn APK cần tải lên.");
+    return result;
+  }));
+
   fetch(`${path}api/status`, { cache: "no-store" })
     .then((response) => response.json())
-    .then((data) => { if (data.devices) renderDevices(data.devices); })
+    .then((data) => { if (data.devices) renderDevices(data.devices); renderCloud(data.cloud); })
     .catch(() => {});
 </script>
 </body>

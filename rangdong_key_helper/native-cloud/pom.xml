@@ -38,8 +38,6 @@
   </dependencies>
 
   <build>
-    <sourceDirectory>../../rangdong_key_helper/native-cloud/src/main/java</sourceDirectory>
-    <testSourceDirectory>../../rangdong_key_helper/native-cloud/src/test/java</testSourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

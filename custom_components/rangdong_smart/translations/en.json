@@ -8,7 +8,7 @@
       "cannot_connect_local": "The device was found, but Home Assistant could not read it over the LAN. Check that the device and Home Assistant are on the same network and that TCP port 6668 is reachable.",
       "cloud_entry_unavailable": "No loaded Rạng Đông cloud entry contains a usable local key. Choose Tuya Cloud, JSON export or manual entry instead.",
       "cloud_key_error": "Tuya Cloud could not return local keys. Check the Access ID, Access Secret, data center, API authorization and that the device account is linked to this cloud project.",
-      "bridge_empty": "No key was received from the Android bridge. Send a trusted export to {endpoint}, then press Submit again.",
+      "bridge_empty": "No key was received from Key Helper. Sign in to cloud in the add-on or send a trusted export to {endpoint}, then press Submit again.",
       "designated_app_error": "Rạng Đông/Tuya rejected QR authorization ({code}) because the scanner is not an approved designated app. Start a fresh flow and scan promptly with the scanner inside Rạng Đông Smart. If it fails repeatedly, the OEM must enable Home Assistant authorization; changing the QR prefix cannot bypass this backend restriction. Details: {msg}",
       "invalid_local_host": "Enter a private IPv4 address for the device.",
       "invalid_local_key": "The local key or protocol version was rejected. Check the 16-character key and try Auto protocol.",
@@ -47,7 +47,7 @@
           "local_key": "Local key",
           "protocol_version": "Protocol version"
         },
-        "description": "Choose how to obtain the device's local key. LAN discovery cannot reveal it. Android bridge, cloud and JSON modes use a one-time import step; manual mode uses the Local key field. Auto tries Tuya protocols 3.5 through 3.1 before saving."
+        "description": "Choose how to obtain the device's local key. LAN discovery cannot reveal it. Key Helper / bridge, Tuya IoT cloud and JSON modes use a one-time import step; manual mode uses the Local key field. Auto tries Tuya protocols 3.5 through 3.1 before saving."
       },
       "local_key_cloud": {
         "data": {
@@ -70,7 +70,7 @@
           "device_id": "Device ID to match",
           "bridge_refresh": "Refresh key list"
         },
-        "description": "On your own Android phone, export the logged-in Rạng Đông device records with the local helper and POST the JSON to {endpoint}. Home Assistant keeps the received keys only in memory until you configure a device; the list endpoint never returns raw keys."
+        "description": "Open the Rạng Đông Key Helper add-on, upload the supported APKs and sign in to your Rạng Đông cloud account without a rooted phone. The add-on sends keys to {endpoint}. The existing Android/Frida mode is also available. Keys remain in memory; the list endpoint never returns raw keys."
       },
       "local_key_device": {
         "data": {
@@ -132,7 +132,7 @@
       "options": {
         "existing_cloud": "Existing authorized cloud entry",
         "json_export": "Import JSON export",
-        "android_bridge": "Android bridge (local one-time import)",
+        "android_bridge": "Key Helper / bridge (cloud or Android)",
         "manual": "Enter local key manually",
         "tuya_cloud": "Fetch once from Tuya Cloud"
       }

@@ -8,7 +8,7 @@
       "cannot_connect_local": "Đã tìm thấy thiết bị nhưng Home Assistant không đọc được qua LAN. Kiểm tra thiết bị và Home Assistant cùng mạng, đồng thời TCP cổng 6668 không bị chặn.",
       "cloud_entry_unavailable": "Không có cloud entry Rạng Đông đang hoạt động chứa local key dùng được. Hãy chọn Tuya Cloud, import JSON hoặc nhập thủ công.",
       "cloud_key_error": "Tuya Cloud không trả được local key. Kiểm tra Access ID, Access Secret, trung tâm dữ liệu, quyền API và việc tài khoản thiết bị đã liên kết với project cloud chưa.",
-      "bridge_empty": "Chưa nhận được key từ Android bridge. Hãy gửi export đáng tin cậy tới {endpoint}, rồi bấm Gửi lại.",
+      "bridge_empty": "Chưa nhận được key từ Key Helper. Đăng nhập cloud trong add-on hoặc gửi export đáng tin cậy tới {endpoint}, rồi bấm Gửi lại.",
       "designated_app_error": "Rạng Đông/Tuya từ chối ủy quyền QR ({code}) vì app quét không nằm trong danh sách ứng dụng được chỉ định. Hãy tạo luồng mới và quét ngay bằng chức năng Scan trong Rạng Đông Smart. Nếu lỗi lặp lại, phía OEM phải bật quyền Home Assistant; đổi prefix QR không thể vượt qua giới hạn backend này. Chi tiết: {msg}",
       "invalid_local_host": "Hãy nhập địa chỉ IPv4 riêng của thiết bị.",
       "invalid_local_key": "Thiết bị từ chối local key hoặc phiên bản giao thức. Kiểm tra khóa 16 ký tự và thử giao thức Tự động.",
@@ -47,7 +47,7 @@
           "local_key": "Local key",
           "protocol_version": "Phiên bản giao thức"
         },
-        "description": "Chọn cách lấy local key. Quét LAN không thể tiết lộ key. Android bridge, cloud và JSON dùng bước import một lần; chế độ thủ công dùng ô Local key. Tự động thử giao thức Tuya 3.5 đến 3.1 trước khi lưu."
+        "description": "Chọn cách lấy local key. Quét LAN không thể tiết lộ key. Key Helper / bridge, Tuya IoT cloud và JSON dùng bước import một lần; chế độ thủ công dùng ô Local key. Tự động thử giao thức Tuya 3.5 đến 3.1 trước khi lưu."
       },
       "local_key_cloud": {
         "data": {
@@ -70,7 +70,7 @@
           "device_id": "Device ID để đối chiếu",
           "bridge_refresh": "Làm mới danh sách key"
         },
-        "description": "Trên điện thoại Android của anh, dùng helper local để xuất các thiết bị của tài khoản Rạng Đông đã đăng nhập rồi POST JSON tới {endpoint}. Home Assistant chỉ giữ key trong bộ nhớ cho tới khi cấu hình xong; endpoint danh sách không trả key thô."
+        "description": "Mở add-on Rạng Đông Key Helper, tải APK được hỗ trợ và đăng nhập email Rạng Đông để lấy key không cần Android root. Add-on chuyển key tới {endpoint}. Hoặc dùng chế độ Android/Frida cũ. Home Assistant giữ key trong bộ nhớ; danh sách không trả key thô."
       },
       "local_key_device": {
         "data": {
@@ -132,7 +132,7 @@
       "options": {
         "existing_cloud": "Cloud entry đã xác thực",
         "json_export": "Import JSON export",
-        "android_bridge": "Android bridge (import local một lần)",
+        "android_bridge": "Key Helper / bridge (cloud hoặc Android)",
         "manual": "Nhập local key thủ công",
         "tuya_cloud": "Lấy một lần từ Tuya Cloud"
       }

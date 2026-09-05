@@ -11,6 +11,7 @@ from typing import Any
 
 from .adb import AdbClient
 from .bridge import HomeAssistantBridge
+from .cloud import CloudClient
 from .constants import DEFAULT_ADB_PORT, DEFAULT_PACKAGE_NAME, FRIDA_LOCAL_PORT
 from .errors import HelperError
 from .frida_client import FridaClient
@@ -83,6 +84,7 @@ class HelperController:
         installer: FridaInstaller | None = None,
         frida_client: FridaClient | None = None,
         bridge: HomeAssistantBridge | None = None,
+        cloud: CloudClient | None = None,
     ) -> None:
         """Initialize helper dependencies."""
 
@@ -91,6 +93,7 @@ class HelperController:
         self._installer = installer or FridaInstaller()
         self._frida = frida_client or FridaClient()
         self._bridge = bridge or HomeAssistantBridge()
+        self._cloud = cloud or CloudClient()
         self._operation_lock = asyncio.Lock()
         self._stage = "idle"
         self._last_error: str | None = None
@@ -106,6 +109,7 @@ class HelperController:
             "stage": self._stage,
             "last_error": self._last_error,
             "devices": self._last_devices,
+            "cloud": self._cloud.status(),
             "defaults": {
                 "host": self.options.android_host,
                 "adb_port": self.options.adb_port,
@@ -120,6 +124,54 @@ class HelperController:
             result = await self._adb.pair(host, pairing_port, code)
             self._stage = "paired"
             return {"success": True, **result}
+
+    async def upload_cloud_apk(self, kind: str, stream: Any) -> dict[str, Any]:
+        async with self._exclusive_operation("uploading_apk"):
+            await self._cloud.upload(kind, stream)
+            self._stage = "idle"
+            return {
+                "success": True,
+                "cloud": self._cloud.status(),
+                "message": "APK hợp lệ, đã lưu riêng trong add-on.",
+            }
+
+    async def clear_cloud_assets(self) -> dict[str, Any]:
+        async with self._exclusive_operation("clearing_apk"):
+            await self._cloud.clear_assets()
+            self._stage = "idle"
+            return {
+                "success": True,
+                "cloud": self._cloud.status(),
+                "message": "Đã xóa APK và thư viện cloud khỏi add-on.",
+            }
+
+    async def cloud_scan(self, credentials: dict[str, str]) -> dict[str, Any]:
+        try:
+            async with self._exclusive_operation("cloud_login"):
+                raw_records = await self._cloud.collect(credentials)
+                records = validate_records(raw_records)
+                raw_records.clear()
+                if not records:
+                    raise HelperError(
+                        "no_local_keys",
+                        "Đăng nhập được nhưng tài khoản không có thiết bị trả local key hợp lệ.",
+                    )
+                try:
+                    self._stage = "importing"
+                    bridge_result = await self._bridge.import_records(records)
+                    self._last_devices = [record.masked() for record in records]
+                    self._stage = "complete"
+                    return {
+                        "success": True,
+                        "count": len(records),
+                        "devices": self._last_devices,
+                        "available_count": bridge_result.get("available_count"),
+                        "message": "Đã lấy và chuyển key vào Home Assistant. Mở Rạng Đông Smart → LAN → Key Helper / bridge để chọn thiết bị.",
+                    }
+                finally:
+                    records.clear()
+        finally:
+            credentials.clear()
 
     async def prepare(self, target: AndroidTarget) -> dict[str, Any]:
         """Prepare root Frida access and verify the SDK process."""
@@ -197,6 +249,7 @@ class HelperController:
     async def cleanup(self) -> None:
         """Remove the ADB port forward when the add-on stops normally."""
 
+        await self._cloud.stop()
         if self._active_serial:
             await self._close_frida(self._active_serial)
 

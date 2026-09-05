@@ -1,5 +1,27 @@
 # Báo cáo nghiên cứu cloud native Rạng Đông — 04/09/2026
 
+## Kết quả cập nhật ngày 05/09/2026: email đã lấy được key
+
+- Đọc tài khoản mới từ file riêng: email + mật khẩu Rạng Đông. Không ghi giá trị vào log.
+- Chọn API `thing.m.user.email.password.login` 3.0 theo `LoginBusiness.s` trong APK;
+  không dùng mobile API cho email. Tên trường `Gmail` viết hoa được nhận diện.
+- Token, đăng nhập, home list và các API thiết bị đều HTTP 200, `success=true`.
+  Chữ ký phản hồi và AES-GCM được xác minh; có `sid` và `ecode`.
+- Sau sửa xử lý `deviceList` thiếu/null ở kết quả local bổ sung, lấy được
+  **9 cặp Device ID/local key hợp lệ**; đã xuất JSON quyền 0600 ra ngoài repo.
+- Bộ `validate_records` của helper nhận đủ 9 bản ghi. Đây là kiểm tra cấu trúc,
+  **không phải** kiểm thử điều khiển thiết bị LAN.
+- Không cần Android root hoặc Tuya IoT project cho lần thử email này.
+- Add-on hiện tại chưa có worker/giao diện cloud; không đổi version hoặc tự push.
+
+Lần email đầu đăng nhập và đọc API thành công nhưng parser dừng ở danh sách local
+bổ sung. `ThingListDataBean.addDevices` trong APK bỏ qua danh sách null/rỗng; PoC
+đã sửa tương ứng và thêm regression test, vẫn từ chối sai kiểu và key xung đột.
+Lần chạy tiếp hoàn tất xuất key. Không lưu phiên đăng nhập hoặc dump cloud response.
+
+Các phần dưới lưu lại **lịch sử nghiên cứu trước khi nhận tài khoản email mới**.
+Những nhận định “chưa đăng nhập/lấy key” bên dưới không còn là trạng thái hiện tại.
+
 ## Phát hiện đã xác minh
 
 Thử nghiệm thực tế trên Linux amd64 với APK `com.rd.smart` 5.7.2 do người dùng
@@ -83,6 +105,76 @@ không dùng shim để bỏ qua yêu cầu xác minh mà server trả về.
 
 ## Kiểm thử mã nguồn đã lưu
 
+### Đối chiếu lại luồng đăng nhập ngày 05/09/2026
+
+Chủ tài khoản xác nhận vẫn đăng nhập được trên app chính thức. Truy vết
+`analysis/apktool_base/smali_classes8/com/thingclips/smart/login/skt/data/LoginRepository$loginWithPassword$1.smali`
+cho thấy nhánh số điện thoại gọi `LoginBusiness.r`, không phải hàm UserBusiness
+3.0 đã chọn ở PoC ban đầu.
+`analysis/apktool_base/smali_classes8/com/thingclips/smart/login/skt/business/LoginBusiness.smali`
+dựng API `thing.m.user.mobile.passwd.login` phiên bản **4.0**, options gồm `group`
+và `mfaCode`. Đã sửa PoC theo nhánh này; mã MFA để rỗng khi chưa có yêu cầu xác minh.
+Nếu server yêu cầu MFA, PoC vẫn dừng, không bỏ qua xác minh.
+
+Kết quả `USER_PASSWD_WRONG` phía trên là thử nghiệm **bản 3.0 trước sửa**, không
+phải kết quả bản 4.0. Sau đó đã thử bản 4.0 bằng định dạng số ban đầu và một lần
+bỏ số 0 đầu theo helper hiện có: cả hai vẫn trả `USER_PASSWD_WRONG`. Token thành
+công, phản hồi có chữ ký hợp lệ và giải mã được. Đã dừng, không thử thêm biến thể.
+Chênh lệch API là phát hiện từ mã APK, chưa chứng minh đó là nguyên nhân duy nhất
+của lỗi hay bản sửa đã đăng nhập được. Không suy ra mật khẩu người dùng sai.
+
+### Đường đi local key tìm thấy trong APK
+
+1. `smali_classes4/com/thingclips/sdk/home/o0Oo0oo.smali`, `queryHomeList`, gọi
+   `o00O0O.OooO00o` để lấy danh sách nhà.
+2. `smali_classes4/com/thingclips/sdk/home/o00O0O.smali` gọi
+   **`m.life.group.location.list` 7.0**, parse danh sách `HomeResponseBean` có
+   `gid`/`id`. PoC cũ dùng API home list từ tài liệu tham khảo, nay đã sửa theo APK.
+3. `smali_classes4/com/thingclips/sdk/home/o00oO0o.smali`, `OooO0Oo(J)`, tạo
+   **`m.life.my.group.device.list` 2.2** với payload `gid`, yêu cầu phiên đăng nhập.
+   Luồng xử lý phản hồi parse danh sách `DeviceRespBean`.
+4. Cùng lớp, `OooO0O0(J, callback)`, gọi **`m.life.app.smart.local.device.list`
+   1.1** với `homeId` và `groupType=homeGroup`. Kết quả là
+   `ThingLocalDeviceListDataBean.deviceList`, gồm `DeviceRespBeanEx` kế thừa
+   `DeviceRespBean`.
+5. `smali_classes10/com/thingclips/smart/interior/device/bean/DeviceRespBean.smali`
+   có trường **`localKey`**; `getLocalKey()` trả trực tiếp trường này, không sinh
+   một key chung từ APK. `devKey` là trường riêng.
+6. `smali_classes14/com/thingclips/smart/sdk/bean/DeviceBean.smali`, `getLocalKey()`,
+   đọc từ DeviceRespBean khi dùng cache mới, nếu không thì đọc trường localKey
+   trong bean. Đây là getter helper Android/Frida đang sử dụng.
+
+Các đường dẫn bắt đầu với `smali_classes` ở phần này tương đối với
+`analysis/apktool_base`. Đây là bằng chứng tĩnh về cấu trúc app, **không phải**
+bằng chứng server hiện trả key cho tài khoản thử nghiệm. Root cho phép helper
+đọc dữ liệu của app đã đăng nhập; root không tạo local key và không thay thế
+xác thực cloud. Chưa xác minh API chia sẻ thiết bị hay trường hợp gateway/thiết bị con.
+
+### Mã bổ sung và kiểm thử ngày 05/09/2026
+
+- `CloudDevices.java`: luồng chỉ đọc ba API đã truy vết, chỉ dùng ID nhà trả về từ
+  phiên hiện tại; không nhận ID tùy ý. Giới hạn 100 nhà/5000 thiết bị và dừng khi lỗi.
+- Chỉ nhận `devId` + `localKey` 16 byte, không suy đoán key từ `devKey`/`secKey`,
+  không nhận metadata tùy ý. Không in key; key xung đột làm dừng toàn bộ snapshot.
+- `--device-probe`: sau đăng nhập, chạy luồng trên và chỉ in số thiết bị có key hợp lệ.
+- Request không có business payload không gửi `postData`, khớp APK.
+- Sửa `prepare.py` sau kiểm thử APK thật: trước đây nhầm một chuỗi 20 ký tự không
+  liên quan là app ID thứ hai. Nay nhận duy nhất cặp hằng 20/32 ký tự liền nhau,
+  vẫn dừng khi không rõ; không ghi giá trị hằng vào repo. Đây vẫn là bộ trích xuất
+  cho phiên bản APK đã nghiên cứu, không phải bộ phân tích APK tổng quát.
+- 13 kiểm tra CloudDevices với dữ liệu giả đạt; 10 kiểm tra giao thức đạt;
+  6 kiểm tra chuẩn bị APK đạt. Chưa có kiểm thử lấy key trên cloud thật.
+
+### Trở ngại tích hợp add-on ở giai đoạn thử số điện thoại
+
+Chưa có phiên cloud hợp lệ để xác minh danh sách nhà, domain sau đăng nhập và
+key thực tế. Không đưa nút “lấy key không cần Android” vào add-on rồi tuyên bố
+hoạt động chỉ dựa trên fixture. Add-on hiện tại vẫn là Android/Frida; cloud worker,
+giao diện tải APK và kiểm thử container là công việc chưa hoàn thành.
+Không thể dùng root để giải quyết phản hồi từ chối đăng nhập của cloud.
+
+### Kết quả kiểm thử ban đầu
+
 - Maven compile/test-compile: đạt.
 - `ProtocolTest`: 10 kiểm tra đạt, gồm vector AES-GCM cố định, nonce prefix,
   từ chối tag bị sửa, envelope ngắn, canonical/MD5 swap và chữ ký phản hồi.
@@ -94,3 +186,16 @@ không dùng shim để bỏ qua yêu cầu xác minh mà server trả về.
   Python hệ thống thiếu aiohttp/PyYAML; không sửa dependency hệ thống.
 - Quét giá trị app ID/app secret trích từ APK trong các file nguồn mới: không có.
 - Chưa kiểm thử đăng nhập thành công hoặc thiết bị thật; không phát hành phiên bản mới.
+# Kiểm thử add-on 0.2.0 (05/09/2026)
+
+Nguồn Java dùng chung đã chuyển vào `rangdong_key_helper/native-cloud`;
+`poc/native-cloud/pom.xml` trỏ tới nguồn đó để tránh hai bản giao thức lệch nhau.
+Đã chạy upload cặp APK thật qua `CloudClient`, chuẩn bị tài nguyên riêng,
+khởi động worker với môi trường tối thiểu và tài khoản qua stdin, rồi gọi
+`HelperController.cloud_scan`: nhận **9 key hợp lệ**, đi qua bước validate và
+đến ranh giới bridge. Bridge trong bài kiểm thử này là đối tượng giả lập;
+chưa chạy trên Supervisor/thiết bị LAN thật. Worker độc lập cũng trả 9 thiết bị.
+Một lần gọi cloud trước đó lỗi chung; các lần kiểm chứng sau thành công,
+không xác định được nguyên nhân lỗi tạm thời. Không tự retry khi lỗi cloud.
+Kiểm thử tự động bảo đảm giao diện không trả key thô, account được xóa khỏi
+dictionary, stdin không xuất hiện trong argv và worker không nhận Supervisor token.

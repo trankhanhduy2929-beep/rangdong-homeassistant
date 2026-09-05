@@ -43,6 +43,7 @@ public final class NativeProbe implements AutoCloseable {
     private final VM vm;
     private final DvmClass secureNativeApi;
     private final DvmObject<?> application;
+    private String lastCloudError = "cloud_request_failed";
 
     private NativeProbe(File apk, File libraryDirectory) {
         emulator = AndroidEmulatorBuilder.for32Bit()
@@ -174,7 +175,8 @@ public final class NativeProbe implements AutoCloseable {
         byte[] key = getEncryptoKey(requestId, ecode);
         byte[] nonce = new byte[12];
         new SecureRandom().nextBytes(nonce);
-        String encryptedPayload = Protocol.encrypt(key, payload.getBytes(StandardCharsets.UTF_8), nonce);
+        String encryptedPayload = payload == null ? null
+                : Protocol.encrypt(key, payload.getBytes(StandardCharsets.UTF_8), nonce);
         Map<String, String> params = new TreeMap<>();
         params.put("a", api);
         params.put("v", version);
@@ -201,7 +203,9 @@ public final class NativeProbe implements AutoCloseable {
         params.put("bizData", "{\"appRnVersion\":\"5.87\"}");
         params.put("chKey", getChKey(appId));
         params.put("time", Long.toString(System.currentTimeMillis() / 1000));
-        params.put("postData", encryptedPayload);
+        if (encryptedPayload != null) {
+            params.put("postData", encryptedPayload);
+        }
         params.put("sign", sign(Protocol.canonical(params)));
         StringBuilder body = new StringBuilder();
         for (Map.Entry<String, String> entry : params.entrySet()) {
@@ -255,6 +259,10 @@ public final class NativeProbe implements AutoCloseable {
             }
             System.out.println("response.success=" + response.getBoolean("success"));
             Object code = response.containsKey("errorCode") ? response.get("errorCode") : response.get("code");
+            if (!Boolean.TRUE.equals(response.get("success")) && code instanceof String
+                    && ((String) code).matches("[A-Za-z0-9_-]{1,80}")) {
+                lastCloudError = (String) code;
+            }
             System.out.println("response.code=" + (code == null ? "absent" : code.toString().replaceAll("[^A-Za-z0-9_-]", "")));
             System.out.println("response.resultType=" + (response.get("result") == null ? "absent" : response.get("result").getClass().getSimpleName()));
             return response;
@@ -268,29 +276,36 @@ public final class NativeProbe implements AutoCloseable {
         return Protocol.hex(bytes);
     }
 
-    private void loginProbe(String appId) throws Exception {
+    private LoginInput readConsoleLogin() {
         java.io.Console console = System.console();
         if (console == null) {
             throw new IllegalStateException("Login requires an interactive terminal");
         }
-        char[] suppliedUsername = console.readPassword("Số điện thoại Rạng Đông (ẩn): ");
+        char[] suppliedUsername = console.readPassword("Email hoặc số điện thoại Rạng Đông (ẩn): ");
         String username = suppliedUsername == null ? null : new String(suppliedUsername);
         if (suppliedUsername != null) {
             Arrays.fill(suppliedUsername, '\0');
         }
         char[] password = console.readPassword("Mật khẩu (ẩn): ");
-        if (username == null || password == null || !username.matches("[0-9]{9,12}")) {
-            throw new IllegalArgumentException("Invalid login input");
-        }
-        String passwordMd5;
+        JSONObject data = new JSONObject();
         try {
-            passwordMd5 = hex(MessageDigest.getInstance("MD5").digest(new String(password).getBytes(StandardCharsets.UTF_8)));
+            data.put("username", username);
+            data.put("password", password == null ? null : new String(password));
+            return LoginInput.fromJson(data);
         } finally {
-            Arrays.fill(password, '\0');
+            data.clear();
+            if (password != null) {
+                Arrays.fill(password, '\0');
+            }
         }
+    }
+
+    private com.alibaba.fastjson.JSONArray loginProbe(String appId, boolean scanDevices, LoginInput account,
+                            java.nio.file.Path exportPath) throws Exception {
+        String passwordMd5 = account.consumePasswordMd5();
         JSONObject tokenPayload = new JSONObject();
-        tokenPayload.put("countryCode", "84");
-        tokenPayload.put("username", username);
+        tokenPayload.put("countryCode", account.countryCode);
+        tokenPayload.put("username", account.username);
         tokenPayload.put("isUid", false);
         JSONObject tokenResponse = request(appId, "thing.m.user.username.token.get", "2.0",
                 tokenPayload.toJSONString(), null, null, null);
@@ -304,13 +319,13 @@ public final class NativeProbe implements AutoCloseable {
         Cipher rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         rsa.init(Cipher.ENCRYPT_MODE, java.security.KeyFactory.getInstance("RSA").generatePublic(publicSpec));
         JSONObject loginPayload = new JSONObject();
-        loginPayload.put("countryCode", "84");
-        loginPayload.put("mobile", username);
+        loginPayload.put("countryCode", account.countryCode);
+        loginPayload.put(account.accountField(), account.username);
         loginPayload.put("passwd", hex(rsa.doFinal(passwordMd5.getBytes(StandardCharsets.UTF_8))));
-        loginPayload.put("options", "{\"group\": 1}");
+        loginPayload.put("options", "{\"group\": 1,\"mfaCode\": \"\"}");
         loginPayload.put("token", token.getString("token"));
         loginPayload.put("ifencrypt", 1);
-        JSONObject loginResponse = request(appId, "thing.m.user.mobile.passwd.login", "3.0",
+        JSONObject loginResponse = request(appId, account.api(), account.version(),
                 loginPayload.toJSONString(), null, null, null);
         loginPayload.clear();
         token.clear();
@@ -324,14 +339,45 @@ public final class NativeProbe implements AutoCloseable {
         if (user.getString("sid") == null || user.getString("ecode") == null) {
             throw new IllegalStateException("Login session missing");
         }
-        JSONObject homes = request(appId, "m.life.home.space.list", "1.0", "{}",
-                user.getString("sid"), user.getString("ecode"), null);
-        boolean listed = Boolean.TRUE.equals(homes.getBoolean("success"))
-                && homes.get("result") instanceof com.alibaba.fastjson.JSONArray;
-        System.out.println("homes.listed=" + listed);
-        user.clear();
-        if (!listed) {
-            throw new IllegalStateException("Home listing not verified");
+        try {
+            if (scanDevices) {
+                com.alibaba.fastjson.JSONArray devices = CloudDevices.collect((api, version, payload) ->
+                        request(appId, api, version, payload == null ? null : payload.toJSONString(),
+                                user.getString("sid"), user.getString("ecode"), null));
+                System.out.println("devices.validLocalKeyCount=" + devices.size());
+                if (exportPath != null && !devices.isEmpty()) {
+                    writePrivateExport(exportPath, devices);
+                    System.out.println("devices.privateExportWritten=true");
+                }
+                return devices;
+            } else {
+                JSONObject homes = request(appId, "m.life.group.location.list", "7.0", null,
+                        user.getString("sid"), user.getString("ecode"), null);
+                boolean listed = Boolean.TRUE.equals(homes.getBoolean("success"))
+                        && homes.get("result") instanceof com.alibaba.fastjson.JSONArray;
+                System.out.println("homes.listed=" + listed);
+                if (!listed) {
+                    throw new IllegalStateException("Home listing not verified");
+                }
+            }
+        } finally {
+            user.clear();
+        }
+        return new com.alibaba.fastjson.JSONArray();
+    }
+
+    static void writePrivateExport(java.nio.file.Path path, com.alibaba.fastjson.JSONArray devices) throws Exception {
+        byte[] encoded = devices.toJSONString().getBytes(StandardCharsets.UTF_8);
+        try (java.nio.channels.SeekableByteChannel output = Files.newByteChannel(path,
+                java.util.EnumSet.of(java.nio.file.StandardOpenOption.CREATE_NEW, java.nio.file.StandardOpenOption.WRITE),
+                java.nio.file.attribute.PosixFilePermissions.asFileAttribute(
+                        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------")))) {
+            java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(encoded);
+            while (buffer.hasRemaining()) {
+                output.write(buffer);
+            }
+        } finally {
+            Arrays.fill(encoded, (byte) 0);
         }
     }
 
@@ -353,6 +399,10 @@ public final class NativeProbe implements AutoCloseable {
     }
 
     public static void main(String[] args) {
+        if (args.length == 4 && "--worker".equals(args[0])) {
+            worker(args);
+            return;
+        }
         try {
             run(args);
         } catch (Exception error) {
@@ -362,15 +412,86 @@ public final class NativeProbe implements AutoCloseable {
         }
     }
 
+    private static void worker(String[] args) {
+        java.io.PrintStream channel = System.out;
+        System.setOut(new java.io.PrintStream(new java.io.OutputStream() {
+            @Override
+            public void write(int value) {
+            }
+        }));
+        com.alibaba.fastjson.parser.ParserConfig.getGlobalInstance().setSafeMode(true);
+        JSONObject result = new JSONObject();
+        NativeProbe probe = null;
+        try {
+            ByteArrayOutputStream input = new ByteArrayOutputStream();
+            int value;
+            while ((value = System.in.read()) != -1 && value != '\n') {
+                if (input.size() >= 16384) {
+                    throw new IllegalArgumentException("Worker input too large");
+                }
+                input.write(value);
+            }
+            JSONObject payload = JSON.parseObject(new String(input.toByteArray(), StandardCharsets.UTF_8));
+            input.reset();
+            try (LoginInput account = LoginInput.fromJson(payload)) {
+                payload.clear();
+                List<String> appCredentials = Files.readAllLines(new File(args[3]).toPath(), StandardCharsets.UTF_8);
+                if (appCredentials.size() != 2) {
+                    throw new IllegalArgumentException("Invalid app credentials");
+                }
+                probe = new NativeProbe(new File(args[1]), new File(args[2]));
+                probe.initializeSecurity(appCredentials.get(0), appCredentials.get(1));
+                result.put("devices", probe.loginProbe(appCredentials.get(0), true, account, null));
+                result.put("success", true);
+                appCredentials.clear();
+            }
+        } catch (Exception error) {
+            result.clear();
+            result.put("success", false);
+            result.put("error", probe == null ? "cloud_worker_failed" : probe.lastCloudError);
+            result.put("failureType", error.getClass().getSimpleName());
+        } finally {
+            if (probe != null) {
+                try {
+                    probe.close();
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        String encoded = result.toJSONString();
+        if (encoded.getBytes(StandardCharsets.UTF_8).length > 512 * 1024) {
+            encoded = "{\"success\":false,\"error\":\"cloud_result_too_large\"}";
+        }
+        channel.println(encoded);
+        channel.flush();
+        result.clear();
+    }
+
     private static void run(String[] args) throws Exception {
         com.alibaba.fastjson.parser.ParserConfig.getGlobalInstance().setSafeMode(true);
-        if (args.length != 3 && args.length != 4) {
+        if (args.length != 3 && args.length != 4 && args.length != 6 && args.length != 8) {
             throw new IllegalArgumentException(
-                    "Usage: NativeProbe <base.apk> <lib-dir> <credential-file> [--token-probe|--login-probe]"
+                    "Usage: NativeProbe <base.apk> <lib-dir> <credential-file> [--token-probe|--login-probe|--device-probe] [--account-file <private.json>]"
             );
         }
-        if (args.length == 4 && !"--token-probe".equals(args[3]) && !"--login-probe".equals(args[3])) {
+        if (args.length >= 4 && !"--token-probe".equals(args[3])
+                && !"--login-probe".equals(args[3]) && !"--device-probe".equals(args[3])) {
             throw new IllegalArgumentException("Unknown mode");
+        }
+        if (args.length >= 6 && (!"--account-file".equals(args[4]) || "--token-probe".equals(args[3]))) {
+            throw new IllegalArgumentException("Invalid account file mode");
+        }
+        java.nio.file.Path exportPath = null;
+        if (args.length == 8) {
+            if (!"--device-probe".equals(args[3]) || !"--export-file".equals(args[6])) {
+                throw new IllegalArgumentException("Invalid export mode");
+            }
+            exportPath = new File(args[7]).toPath().toAbsolutePath().normalize();
+            java.nio.file.Path accountDirectory = new File(args[5]).toPath().toRealPath().getParent();
+            if (!exportPath.getParent().toRealPath().equals(accountDirectory)
+                    || Files.exists(exportPath, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+                throw new IllegalArgumentException("Export must be a new file beside the private account file");
+            }
         }
         List<String> credentials = Files.readAllLines(
                 new File(args[2]).toPath(),
@@ -389,8 +510,11 @@ public final class NativeProbe implements AutoCloseable {
                         null, null, null);
                 return;
             }
-            if (args.length == 4 && "--login-probe".equals(args[3])) {
-                probe.loginProbe(appId);
+            if (args.length >= 4 && ("--login-probe".equals(args[3]) || "--device-probe".equals(args[3]))) {
+                try (LoginInput account = args.length >= 6
+                        ? LoginInput.fromFile(new File(args[5]).toPath()) : probe.readConsoleLogin()) {
+                    probe.loginProbe(appId, "--device-probe".equals(args[3]), account, exportPath).clear();
+                }
                 return;
             }
             String chKey = probe.getChKey(appId);

@@ -41,10 +41,11 @@ xác thực QR cũ làm lựa chọn dự phòng.
 
 ## Giới hạn quan trọng
 
-**Nghiên cứu đăng nhập cloud không cần Android:** mã thử nghiệm nằm trong
-`poc/native-cloud/`, có hướng dẫn và báo cáo tiếng Việt. Đã xác minh lấy token và
-giải mã phản hồi; lần đăng nhập thử bị server từ chối với `USER_PASSWD_WRONG`.
-Chưa xác minh lấy được local key, nên tính năng này **chưa được đưa vào add-on/HACS**.
+**Đăng nhập cloud không cần Android:** add-on **0.2.0** kết hợp tích hợp
+**0.2.5** có giao diện tải APK, đăng nhập Rạng Đông và chuyển local key vào
+Home Assistant. Nghiên cứu đã lấy được key của 9 thiết bị bằng email.
+Không cần điện thoại root hoặc Tuya IoT project. Chưa kiểm thử điều khiển LAN
+trên các thiết bị thật đó. Xem [hướng dẫn cloud](rangdong_key_helper/DOCS.md).
 
 Quét mạng LAN **không thể lấy được** `local_key` của thiết bị. Đây là thông tin
 xác thực riêng cho từng thiết bị và là thành phần bắt buộc của giao thức Tuya
@@ -67,8 +68,8 @@ khai hay kho GitHub.
 5. Mở **Cài đặt → Thiết bị & dịch vụ → Thêm tích hợp**, rồi chọn
    **Rạng Đông Smart**.
 
-HACS chỉ cài **tích hợp Rạng Đông Smart**. Ứng dụng hỗ trợ lấy key trên Android
-đã root phải được cài riêng từ kho ứng dụng Home Assistant theo phần dưới đây.
+HACS chỉ cài **tích hợp Rạng Đông Smart**. Add-on **Rạng Đông Key Helper**
+phải cài riêng từ kho ứng dụng Home Assistant theo phần dưới đây.
 
 ## Cài Rạng Đông Key Helper
 
@@ -83,27 +84,20 @@ Kho GitHub này đồng thời là một kho ứng dụng Home Assistant:
    ```
 
 2. Cài **Rạng Đông Key Helper** và khởi động ứng dụng thủ công.
-3. Mở giao diện web của helper. Ghép đôi Android Wireless debugging nếu Home
-   Assistant này chưa từng ghép đôi với điện thoại.
-4. Nhập đúng **cổng kết nối ADB** hiển thị trên màn hình Wireless debugging
-   chính của Android. Cổng này thường khác cổng ghép đôi tạm thời.
-5. Chọn một trong hai cách:
-   - đăng nhập từ helper; hoặc
-   - đăng nhập trước bằng ứng dụng Rạng Đông chính thức, sau đó chọn dò bằng
-     phiên ứng dụng hiện có.
-6. Quay lại **Thêm tích hợp → Rạng Đông Smart → LAN nội bộ → Android bridge**
+3. Cập nhật tích hợp lên **0.2.5**, khởi động lại Home Assistant trước khi lấy key.
+4. Mở giao diện web helper → mục **Cloud**. Tải lên hai APK Rạng Đông 5.7.2
+   được hỗ trợ theo [hướng dẫn](rangdong_key_helper/DOCS.md).
+5. Nhập email và mật khẩu tài khoản **Rạng Đông**, rồi bấm đăng nhập lấy key.
+   Không nhập mật khẩu Google; không cần quét QR hay Android.
+6. Quay lại **Thêm tích hợp → Rạng Đông Smart → LAN nội bộ → Key Helper / bridge**
    và chọn Device ID đã import.
 
-Điện thoại **bắt buộc phải được root** và trình quản lý root phải cấp quyền root
-cho ADB shell. APK Rạng Đông không bật chế độ gỡ lỗi và đặt
-`allowBackup=false`, vì vậy Wireless ADB thông thường trên điện thoại chưa root
-không thể gắn vào tiến trình ứng dụng hoặc đọc các đối tượng SDK riêng tư.
-
-Helper không tự viết lại hoặc giả lập giao thức đăng nhập riêng của
-Rạng Đông/Tuya trên Linux. Biểu mẫu đăng nhập của helper gọi SDK ThingClips
-chính thức ngay bên trong tiến trình `com.rd.smart` đã cài trên điện thoại.
-Tài khoản và mật khẩu không được lưu vào tùy chọn ứng dụng, tệp, log hoặc
-GitHub; chúng chỉ tồn tại tạm thời trong bộ nhớ khi thực hiện yêu cầu.
+Mục **Android** là phương án bổ sung, chỉ mục này mới cần root và ADB.
+Cloud chạy thư viện native từ APK do bạn cung cấp trong worker Linux riêng.
+APK được kiểm tra SHA-256 trước khi dùng; không đóng gói APK hay bí mật ứng dụng
+vào image/GitHub. Tài khoản, mật khẩu và phiên cloud không được lưu vào options
+hay log. iPhone có thể mở Ingress từ xa qua HTTPS; Home Assistant vẫn phải
+truy cập được mạng LAN của thiết bị để điều khiển local.
 
 Nếu tài khoản yêu cầu captcha, mã xác minh hoặc gặp giới hạn “designated app”,
 hãy đăng nhập trực tiếp bằng ứng dụng Rạng Đông chính thức rồi dùng chức năng
@@ -184,10 +178,10 @@ nhớ đệm riêng này thường cần điện thoại test đã root/bật g�
 kiểm tra lúc chạy như Frida. Chỉ thực hiện trên tài khoản và điện thoại của
 chính bạn, giữ key ở chế độ riêng tư và tuyệt đối không đưa key vào kho này.
 
-### Android bridge: nhập key local một lần
+### Key Helper / bridge: nhập key local một lần
 
 Nên dùng ứng dụng Home Assistant chỉ dành cho quản trị viên đã mô tả ở trên.
-Ứng dụng tự gọi SDK Android đang đăng nhập, kiểm tra key dài 16 byte và gửi key
+Ứng dụng lấy key qua cloud hoặc SDK Android, kiểm tra key dài 16 byte và gửi key
 qua Supervisor đến địa chỉ API có xác thực của tích hợp. Giao diện chỉ hiển thị
 giá trị đã che.
 
@@ -221,9 +215,9 @@ curl -X DELETE \
 
 Chỉ gửi dữ liệu qua HTTPS hoặc một mạng LAN đáng tin cậy. Không đưa mật khẩu
 Rạng Đông, token Home Assistant hay local key thô vào issue hoặc kho công khai.
-Chức năng đăng nhập của helper vẫn cần ứng dụng Android Rạng Đông chính thức
-trên điện thoại đã root; chỉ có tên đăng nhập và mật khẩu không thể vượt qua
-việc kiểm tra danh tính ứng dụng di động của nhà sản xuất.
+Chế độ cloud cần đúng cặp APK được hỗ trợ, không cần Android root. Email đã
+được kiểm chứng; không bảo đảm tài khoản điện thoại hay mọi vùng cloud đều
+hoạt động. Không bỏ qua CAPTCHA hoặc xác minh tài khoản.
 
 Bộ quét LAN không thể suy ra key từ gói tin quảng bá. Khi không có local key
 khớp, tích hợp có thể nhận diện thiết bị nhưng không thể giải mã trạng thái hoặc

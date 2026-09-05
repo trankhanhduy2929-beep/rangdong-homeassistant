@@ -1,3 +1,12 @@
+FROM maven:3.9.9-eclipse-temurin-21 AS native-build
+WORKDIR /build
+COPY native-cloud/pom.xml ./pom.xml
+COPY native-cloud/src ./src
+RUN mvn -B -q test-compile dependency:copy-dependencies -DoutputDirectory=target/lib \
+    && java -cp 'target/classes:target/test-classes:target/lib/*' local.rangdong.ProtocolTest \
+    && java -cp 'target/classes:target/test-classes:target/lib/*' local.rangdong.CloudDevicesTest \
+    && java -cp 'target/classes:target/test-classes:target/lib/*' local.rangdong.LoginInputTest
+
 FROM python:3.13.15-slim-trixie
 
 ARG BUILD_ARCH
@@ -8,16 +17,16 @@ LABEL \
     io.hass.type="app" \
     io.hass.arch="${BUILD_ARCH}" \
     org.opencontainers.image.title="Rạng Đông Key Helper" \
-    org.opencontainers.image.description="Helper ADB và Frida cho Rạng Đông Smart trên Android đã root" \
+    org.opencontainers.image.description="Đăng nhập cloud lấy local key; Android là phương án bổ sung" \
     org.opencontainers.image.source="https://github.com/trankhanhduy2929-beep/rangdong-homeassistant" \
-    org.opencontainers.image.licenses="MIT AND (LGPL-2.0-or-later WITH WxWindows-exception-3.1)"
+    org.opencontainers.image.licenses="MIT AND Apache-2.0 AND GPL-2.0-only AND (LGPL-2.0-or-later WITH WxWindows-exception-3.1)"
 
 ENV HOME=/data \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends --yes adb ca-certificates \
+    && apt-get install --no-install-recommends --yes adb ca-certificates openjdk-21-jre-headless \
     && apt-get clean \
     && find /var/lib/apt/lists -mindepth 1 -delete
 
@@ -26,6 +35,9 @@ RUN pip install --no-cache-dir --requirement /tmp/requirements.txt
 
 COPY LICENSE THIRD_PARTY_NOTICES.md LICENSE.frida.txt /usr/share/doc/rangdong-key-helper/
 COPY rootfs/app /app
+COPY --from=native-build /build/target/classes /app/native/classes
+COPY --from=native-build /build/target/lib /app/native/lib
+RUN java -cp '/app/native/classes:/app/native/lib/*' local.rangdong.BackendSmoke
 WORKDIR /app
 
 EXPOSE 8099

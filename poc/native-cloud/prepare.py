@@ -6,6 +6,7 @@ import argparse
 import os
 import re
 import zipfile
+from itertools import pairwise
 from pathlib import Path
 
 LIBRARIES = (
@@ -24,10 +25,15 @@ def prepare(smali: Path, abi_apk: Path, output: Path) -> None:
         r'const-string(?:/jumbo)?\s+v\d+,\s+"([^"\n]*)"',
         smali.read_text(encoding="utf-8"),
     )
-    app_ids = {value for value in strings if re.fullmatch(r"[A-Za-z0-9]{20}", value)}
-    secrets = {value for value in strings if re.fullmatch(r"[A-Za-z0-9]{32}", value)}
-    if len(app_ids) != 1 or len(secrets) != 1:
+    pairs = {
+        (app_id, secret)
+        for app_id, secret in pairwise(strings)
+        if re.fullmatch(r"[A-Za-z0-9]{20}", app_id)
+        and re.fullmatch(r"[A-Za-z0-9]{32}", secret)
+    }
+    if len(pairs) != 1:
         raise ValueError("APK không khớp bố cục đã kiểm tra; dừng thay vì đoán khóa")
+    app_id, app_secret = pairs.pop()
     libraries = {}
     with zipfile.ZipFile(abi_apk) as archive:
         for name in LIBRARIES:
@@ -42,9 +48,7 @@ def prepare(smali: Path, abi_apk: Path, output: Path) -> None:
     library_dir = output / "libs"
     library_dir.mkdir(mode=0o700)
     files = {
-        output / "app-credentials": (
-            next(iter(app_ids)) + "\n" + next(iter(secrets)) + "\n"
-        ).encode(),
+        output / "app-credentials": (app_id + "\n" + app_secret + "\n").encode(),
         **{library_dir / name: content for name, content in libraries.items()},
     }
     for path, content in files.items():

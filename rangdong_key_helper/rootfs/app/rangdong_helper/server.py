@@ -12,6 +12,7 @@ from typing import Any
 from aiohttp import web
 
 from .authorization import HomeAssistantUserAuthorizer
+from .cloud import parse_cloud_login
 from .constants import ADDON_PORT, MAX_REQUEST_BYTES
 from .controller import HelperController
 from .errors import HelperError
@@ -178,6 +179,25 @@ def create_app(
         finally:
             credentials = None
 
+    async def cloud_login(request: web.Request) -> web.Response:
+        payload = await _read_payload(request)
+        try:
+            credentials = parse_cloud_login(payload)
+        finally:
+            payload.clear()
+        try:
+            return web.json_response(await helper.cloud_scan(credentials))
+        finally:
+            credentials.clear()
+
+    async def cloud_upload(request: web.Request) -> web.Response:
+        return web.json_response(
+            await helper.upload_cloud_apk(request.match_info["kind"], request.content)
+        )
+
+    async def cloud_clear(_request: web.Request) -> web.Response:
+        return web.json_response(await helper.clear_cloud_assets())
+
     async def clear_bridge(_request: web.Request) -> web.Response:
         return web.json_response(await helper.clear_bridge())
 
@@ -191,6 +211,9 @@ def create_app(
     app.router.add_post("/api/prepare", prepare)
     app.router.add_post("/api/scan", scan)
     app.router.add_post("/api/login-scan", login_scan)
+    app.router.add_post("/api/cloud/login-scan", cloud_login)
+    app.router.add_post("/api/cloud/apk/{kind}", cloud_upload)
+    app.router.add_delete("/api/cloud/apk", cloud_clear)
     app.router.add_delete("/api/bridge", clear_bridge)
     app.on_cleanup.append(cleanup)
     return app

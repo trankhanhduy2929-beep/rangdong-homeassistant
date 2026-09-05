@@ -4,6 +4,25 @@ Mã nguồn do dự án Rạng Đông Key Helper tự phát triển được ph�
 phép MIT của kho này. Helper đồng thời phân phối hoặc tải xuống các phần mềm
 bên thứ ba sau:
 
+## Worker cloud từ 0.2.0
+
+- Unidbg Android và backend Unicorn2 **0.9.8**: mã Java theo Apache-2.0;
+  nguồn `https://github.com/zhkl0228/unidbg/tree/v0.9.8`.
+- Backend dùng Unicorn Engine (GPL-2.0); nhánh nguồn của nhà cung cấp:
+  `https://github.com/zhkl0228/unicorn/tree/unicorn2`. Hướng dẫn dựng JNI nằm
+  trong `backend/unicorn2` của mã nguồn Unidbg. Giấy phép và thông báo của
+  các thành phần nhúng vẫn áp dụng, không bị thay bằng MIT của helper.
+- Fastjson **1.2.83** (Apache-2.0), SLF4J **2.0.13** (MIT), cùng phụ thuộc
+  chuyển tiếp được Maven giải quyết từ `native-cloud/pom.xml`. Các JAR giữ
+  nguyên metadata/giấy phép của nhà cung cấp trong `META-INF`.
+- OpenJDK 21 từ Debian (GPL-2.0 với Classpath exception khi áp dụng); xem
+  thông báo gói tại `/usr/share/doc` trong image. Maven/Temurin chỉ dùng ở
+  giai đoạn build, không sao chép nguyên môi trường Maven vào image chạy.
+
+APK Rạng Đông và thư viện của hãng **không được phân phối trong image/kho**.
+Người dùng cung cấp riêng cặp APK được phép sử dụng; quyền của nhà sản xuất
+vẫn áp dụng với các tệp này.
+
 ## Frida Java bridge 7.0.13
 
 Agent đã biên dịch tại
