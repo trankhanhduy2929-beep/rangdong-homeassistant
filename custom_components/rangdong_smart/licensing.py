@@ -149,7 +149,8 @@ class LicenseManager:
                     cached = None
             now = int(time.time())
             last_attempt = state.setdefault("last_attempt", {}).get(slot, 0)
-            if key is None and cached and now - cached["iat"] < 3600:
+            refresh_interval = 300 if component == "addon" else 3600
+            if key is None and cached and now - cached["iat"] < refresh_interval:
                 return {
                     **base,
                     "valid": True,
@@ -159,8 +160,8 @@ class LicenseManager:
             if now - last_attempt < 60:
                 return {
                     **base,
-                    "valid": bool(cached),
-                    "status": "offline_grace" if cached else "retry_later",
+                    "valid": bool(cached) if component != "addon" else False,
+                    "status": "offline_grace" if cached and component != "addon" else "retry_later",
                 }
             state["last_attempt"][slot] = now
             payload = {
@@ -250,8 +251,8 @@ class LicenseManager:
                 await self._store.async_save(state)
                 return {
                     **base,
-                    "valid": bool(cached),
-                    "status": "offline_grace" if cached else "server_unavailable",
+                    "valid": bool(cached) if component != "addon" else False,
+                    "status": "offline_grace" if cached and component != "addon" else "server_unavailable",
                 }
             finally:
                 payload.clear()
