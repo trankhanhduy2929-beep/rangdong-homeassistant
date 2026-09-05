@@ -1,5 +1,21 @@
 # Rạng Đông Smart cho Home Assistant
 
+## Bản 0.3.0: license và giao diện tối giản
+
+- Add-on bỏ chế độ Android/import APK; chỉ nhập license, đăng nhập và chọn thiết bị.
+- Website Next.js trên Vercel + Cloudflare D1 + PayOS, đăng ký email/mật khẩu
+  không cần OTP; có dashboard và admin riêng.
+- Gói dùng thử 1 ngày miễn phí (một lần/tài khoản và installation), 30 ngày
+  50.000đ, vĩnh viễn 200.000đ. Cùng key cho một add-on và một custom trên cùng HA.
+- Hướng dẫn deploy/cấu hình/đóng ZIP: [LICENSE_DEPLOY_VI.md](LICENSE_DEPLOY_VI.md).
+- Website đã deploy tại `https://rangdong-license-portal.vercel.app`.
+  Trạng thái kiểm thử và ZIP: [DEPLOY_STATUS_VI.md](DEPLOY_STATUS_VI.md).
+- Giao thức cloud và điều khiển LAN đang hoạt động không thay đổi. License không
+  ngắt thiết bị đã cấu hình; chỉ kiểm soát thêm cấu hình mới và lấy key cloud mới.
+
+Các mục hướng dẫn phiên bản cũ bên dưới được giữ để tham khảo; cách dùng add-on
+hiện tại nằm trong [DOCS.md](rangdong_key_helper/DOCS.md).
+
 Tích hợp tùy chỉnh cài qua HACS dành cho thiết bị **Rạng Đông Smart**, hỗ trợ
 điều khiển trực tiếp bằng giao thức Tuya trong mạng LAN và vẫn giữ phương thức
 xác thực QR cũ làm lựa chọn dự phòng.
