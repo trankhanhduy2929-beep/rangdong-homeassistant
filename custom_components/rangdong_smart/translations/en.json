@@ -2,7 +2,8 @@
   "config": {
     "abort": {
       "reauth_successful": "Re-authentication was successful",
-      "reconfigure_successful": "The local configuration was updated successfully"
+      "reconfigure_successful": "The local configuration was updated successfully",
+      "cloud_qr_removed": "Add the device using its IP, device ID and local key. QR setup is no longer supported."
     },
     "error": {
       "cannot_connect_local": "The device was found, but Home Assistant could not read it over the LAN. Check that the device and Home Assistant are on the same network and that TCP port 6668 is reachable.",
@@ -44,11 +45,10 @@
           "name": "Device name",
           "host": "Device IP address",
           "device_id": "Device ID",
-          "local_key_source": "Local key source",
           "local_key": "Local key",
           "protocol_version": "Protocol version"
         },
-        "description": "Choose how to obtain the device's local key. LAN discovery cannot reveal it. Key Helper / bridge, Tuya IoT cloud and JSON modes use a one-time import step; manual mode uses the Local key field. Auto tries Tuya protocols 3.5 through 3.1 before saving."
+        "description": "Enter the IP, device ID and local key from Key Helper. Select the protocol version or Auto."
       },
       "local_key_cloud": {
         "data": {

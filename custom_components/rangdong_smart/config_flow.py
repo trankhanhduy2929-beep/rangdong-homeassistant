@@ -614,106 +614,12 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_cloud_qr(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the legacy QR User Code form."""
-
-        errors: dict[str, str] = {}
-        placeholders: dict[str, str] = {}
-        if user_input is not None:
-            success, response = await self._async_get_qr_code(
-                user_input.get(CONF_USER_CODE, "")
-            )
-            if success:
-                return await self.async_step_scan()
-            errors["base"] = self._error_key(response)
-            placeholders = self._error_placeholders(response)
-
-        return self._show_user_code_form(
-            step_id="cloud_qr",
-            user_code=(user_input or {}).get(CONF_USER_CODE, ""),
-            errors=errors,
-            placeholders=placeholders,
-        )
+        return self.async_abort(reason="cloud_qr_removed")
 
     async def async_step_scan(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Show the QR code and finish after the app approves it."""
-
-        if user_input is None:
-            if not self._user_code or not self._qr_token:
-                return self._show_user_code_form(
-                    step_id=self._user_code_step_id(),
-                    user_code=self._user_code,
-                )
-            return self._show_scan_form()
-
-        try:
-            success, info = await self.hass.async_add_executor_job(
-                self._login_control.login_result,
-                self._qr_token,
-                TUYA_CLIENT_ID,
-                self._user_code,
-            )
-        except (requests.RequestException, ValueError, KeyError, TypeError):
-            success, info = (
-                False,
-                {
-                    "code": "NETWORK_ERROR",
-                    "msg": "Unable to reach the Tuya authorization gateway",
-                },
-            )
-        if not isinstance(info, Mapping):
-            success, info = (
-                False,
-                {
-                    "code": "INVALID_RESPONSE",
-                    "msg": "Gateway returned an invalid login response",
-                },
-            )
-        if not success:
-            error_key = self._error_key(info)
-            placeholders = self._error_placeholders(info)
-            refreshed, refresh_response = await self._async_get_qr_code(self._user_code)
-            if not refreshed:
-                return self._show_user_code_form(
-                    step_id=self._user_code_step_id(),
-                    user_code=self._user_code,
-                    errors={"base": self._error_key(refresh_response)},
-                    placeholders=self._error_placeholders(refresh_response),
-                )
-            return self._show_scan_form(
-                errors={"base": error_key},
-                placeholders=placeholders,
-            )
-
-        try:
-            entry_data = self._entry_data(info, self._user_code)
-        except ValueError as error:
-            return self._show_scan_form(
-                errors={"base": "login_error"},
-                placeholders={"code": "INVALID_RESPONSE", "msg": str(error)},
-            )
-
-        if self.source in {SOURCE_REAUTH, SOURCE_RECONFIGURE}:
-            await self.async_set_unique_id(str(entry_data[CONF_TOKEN_INFO]["uid"]))
-            self._abort_if_unique_id_mismatch()
-            entry = (
-                self._get_reauth_entry()
-                if self.source == SOURCE_REAUTH
-                else self._get_reconfigure_entry()
-            )
-            return self.async_update_reload_and_abort(
-                entry,
-                data=entry_data,
-            )
-
-        await self.async_set_unique_id(str(entry_data[CONF_TOKEN_INFO]["uid"]))
-        self._abort_if_unique_id_configured()
-
-        return self.async_create_entry(
-            title=info.get("username") or "Rạng Đông Smart",
-            data=entry_data,
-        )
+        return self.async_abort(reason="cloud_qr_removed")
 
     async def async_step_reauth(
         self, entry_data: Mapping[str, Any]
@@ -730,34 +636,12 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             )
             return await self.async_step_reauth_local()
 
-        if user_code := entry_data.get(CONF_USER_CODE):
-            success, _ = await self._async_get_qr_code(str(user_code))
-            if success:
-                return await self.async_step_scan()
-        return await self.async_step_reauth_user_code()
+        return self.async_abort(reason="cloud_qr_removed")
 
     async def async_step_reauth_user_code(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Ask for a replacement User Code during reauthorization."""
-
-        errors: dict[str, str] = {}
-        placeholders: dict[str, str] = {}
-        if user_input is not None:
-            success, response = await self._async_get_qr_code(
-                user_input.get(CONF_USER_CODE, "")
-            )
-            if success:
-                return await self.async_step_scan()
-            errors["base"] = self._error_key(response)
-            placeholders = self._error_placeholders(response)
-
-        return self._show_user_code_form(
-            step_id="reauth_user_code",
-            user_code=(user_input or {}).get(CONF_USER_CODE, ""),
-            errors=errors,
-            placeholders=placeholders,
-        )
+        return self.async_abort(reason="cloud_qr_removed")
 
     async def _async_get_qr_code(self, user_code: str) -> tuple[bool, dict[str, Any]]:
         """Request a temporary QR token from the Tuya gateway."""
