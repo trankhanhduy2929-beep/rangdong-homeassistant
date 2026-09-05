@@ -41,6 +41,11 @@ xác thực QR cũ làm lựa chọn dự phòng.
 
 ## Giới hạn quan trọng
 
+**Nghiên cứu đăng nhập cloud không cần Android:** mã thử nghiệm nằm trong
+`poc/native-cloud/`, có hướng dẫn và báo cáo tiếng Việt. Đã xác minh lấy token và
+giải mã phản hồi; lần đăng nhập thử bị server từ chối với `USER_PASSWD_WRONG`.
+Chưa xác minh lấy được local key, nên tính năng này **chưa được đưa vào add-on/HACS**.
+
 Quét mạng LAN **không thể lấy được** `local_key` của thiết bị. Đây là thông tin
 xác thực riêng cho từng thiết bị và là thành phần bắt buộc của giao thức Tuya
 LAN đã mã hóa. Luồng cài đặt sẽ dò IP/Device ID trước, sau đó cho phép lấy key

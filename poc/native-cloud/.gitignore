@@ -1,0 +1,7 @@
+target/
+classpath.txt
+private/
+*.apk
+*.so
+app-credentials
+*.log
