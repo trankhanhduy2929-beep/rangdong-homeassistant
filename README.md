@@ -6,7 +6,7 @@ ADB, Frida, import APK hoặc Tuya IoT Cloud project.
 
 ## Cài qua HACS
 
-1. Mở **HACS → Integrations**.
+1. Mở **HACS → Integrations**. Điền link repo https://github.com/trankhanhduy2929-beep/rangdong-homeassistant
 2. Tìm `Rạng Đông Smart` hoặc thêm repository này bằng **Custom repositories**.
 3. Chọn loại **Integration**, cài đặt và restart Home Assistant.
 4. Vào **Settings → Devices & services → Add integration**.
