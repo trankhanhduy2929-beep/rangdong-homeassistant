@@ -64,16 +64,17 @@ trial hai slot và chặn trial tài khoản khác đã kiểm tra trực tiếp
 PayOS tạo QR tháng 50.000đ và hủy/đối soát thành công, không chuyển tiền. Automated
 payment/email dùng mock; cần kiểm tra giao dịch tiền thật trước mở bán.
 Chi tiết trong `DEPLOY_STATUS_VI.md`.
-Máy phát triển không có Docker/Podman, không build image add-on mới tại đây;
-ZIP local đủ source để Supervisor build, CI đã có bước build khi anh tự push.
+Đã push `main` ngày 17/11/2026; GitHub Actions build image add-on 0.3.5 cho
+`amd64`/`arm64` và publish lên GHCR.
 
 Gói `licensed` đã gắn public URL/key production, `ENFORCE=True`. Gói `setup` cũ
 là bản compatibility, không dùng nhầm để phát hành thương mại.
 License kiểm tra khi thiết lập, polling và điều khiển; hết hạn/bị thu hồi khóa điều khiển nhưng giữ cấu hình. Bản 0.3.4 gộp thêm thay đổi từ các bản phát hành GitHub 0.3.1–0.3.4.
+Bản 0.3.5 đóng gói lại source/add-on và CI; logic license không đổi.
 Không thể chống clone nguyên private storage hoặc sửa Python source tuyệt đối;
 chi tiết và độ trễ thu hồi offline có trong `LICENSE_DEPLOY_VI.md`.
 
-Không commit hoặc push GitHub trong lượt triển khai này theo yêu cầu người dùng.
+Đã commit/push GitHub ngày 17/11/2026; không cài lên Home Assistant của người dùng.
 
 ## Cập nhật website: mật khẩu và mobile
 

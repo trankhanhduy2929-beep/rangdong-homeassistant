@@ -1,6 +1,6 @@
 # Rạng Đông Smart cho Home Assistant
 
-## Bản 0.3.4: license và giao diện tối giản
+## Bản 0.3.5: license và đóng gói add-on
 
 - Add-on bỏ chế độ Android/import APK; chỉ nhập license, đăng nhập và chọn thiết bị.
 - Website Next.js trên Vercel + Cloudflare D1 + PayOS, đăng ký email/mật khẩu
@@ -58,8 +58,8 @@ xác thực QR cũ làm lựa chọn dự phòng.
 
 ## Giới hạn quan trọng
 
-**Đăng nhập cloud không cần Android:** add-on **0.3.4** kết hợp tích hợp
-**0.3.4** có sẵn bộ đăng nhập Rạng Đông và chuyển local key vào
+**Đăng nhập cloud không cần Android:** add-on **0.3.5** kết hợp tích hợp
+**0.3.5** có sẵn bộ đăng nhập Rạng Đông và chuyển local key vào
 Home Assistant. Nghiên cứu đã lấy được key của 9 thiết bị bằng email.
 Không cần điện thoại root hoặc Tuya IoT project. Chưa kiểm thử điều khiển LAN
 trên các thiết bị thật đó. Xem [hướng dẫn cloud](rangdong_key_helper/DOCS.md).
@@ -101,7 +101,7 @@ Kho GitHub này đồng thời là một kho ứng dụng Home Assistant:
    ```
 
 2. Cài **Rạng Đông Key Helper** và khởi động ứng dụng thủ công.
-3. Cập nhật tích hợp lên **0.3.4**, khởi động lại Home Assistant trước khi lấy key.
+3. Cập nhật tích hợp lên **0.3.5**, khởi động lại Home Assistant trước khi lấy key.
 4. Mở giao diện web helper → mục **Cloud**. Bộ đăng nhập đã có sẵn;
    **không cần import APK**. Xem [hướng dẫn](rangdong_key_helper/DOCS.md).
 5. Nhập email và mật khẩu tài khoản **Rạng Đông**, rồi bấm đăng nhập lấy key.
@@ -147,7 +147,7 @@ Mỗi thiết bị được tạo thành một mục cấu hình (config entry) 
 
 Ứng dụng chính thức thường không hiển thị local key. Các nguồn được hỗ trợ gồm:
 
-- đăng nhập Rạng Đông bằng email trong **Key Helper 0.3.4**, không cần nhập APK,
+- đăng nhập Rạng Đông bằng email trong **Key Helper 0.3.5**, không cần nhập APK,
   Android hoặc Tuya IoT project;
 - bản dữ liệu thiết bị Tuya/Rạng Đông đã xuất từ nguồn được cấp quyền hoặc một tích hợp local
   hiện có đã chứa key;

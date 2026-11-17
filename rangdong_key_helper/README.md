@@ -15,7 +15,7 @@ Nếu repository đã có sẵn, chỉ cần cập nhật add-on lên bản mớ
 
 ## License
 
-Cần cập nhật custom Rạng Đông Smart lên **0.3.4** cùng add-on. Chỉ license hợp lệ
+Cần cập nhật custom Rạng Đông Smart lên **0.3.5** cùng add-on. Chỉ license hợp lệ
 trên đúng Home Assistant mới cho phép thêm cấu hình, điều khiển thiết bị, đăng
 nhập lấy key và xem danh sách key. Hết hạn hoặc bị thu hồi thì điều khiển bị khóa
 và entity không khả dụng, nhưng cấu hình thiết bị được giữ nguyên; nhận gói trả

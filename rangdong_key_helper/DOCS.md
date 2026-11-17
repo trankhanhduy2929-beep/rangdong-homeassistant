@@ -1,11 +1,11 @@
-# Rạng Đông Key Helper 0.3.4
+# Rạng Đông Key Helper 0.3.5
 
 Giao diện mới chỉ có **License**, **tài khoản Rạng Đông** và **thiết bị đã lấy key**.
 Không cần Android root, ADB/Frida hoặc import APK. Bộ đăng nhập đã tích hợp sẵn.
 
 ## Sử dụng
 
-1. Cập nhật custom Rạng Đông Smart **0.3.4** và khởi động lại Home Assistant.
+1. Cập nhật custom Rạng Đông Smart **0.3.5** và khởi động lại Home Assistant.
 2. Mở add-on bằng tài khoản HA quản trị. Nếu yêu cầu license, bấm **Nhận dùng
    thử / mua / xem key**, đăng ký email + mật khẩu (không cần OTP), nhận trial
    hoặc thanh toán PayOS và sao chép key.

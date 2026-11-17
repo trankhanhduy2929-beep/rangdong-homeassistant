@@ -1,7 +1,7 @@
 {
   "name": "rangdong-key-helper-agent",
   "private": true,
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Agent Frida được đóng gói trong ứng dụng Rạng Đông Key Helper",
   "license": "MIT",
   "type": "commonjs",

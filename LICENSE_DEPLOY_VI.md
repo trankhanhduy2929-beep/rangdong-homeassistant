@@ -1,4 +1,4 @@
-# Triển khai License Rạng Đông 0.3.4
+# Triển khai License Rạng Đông 0.3.5
 
 ## 1. Những gì đã thay đổi và không thay đổi
 
@@ -229,7 +229,7 @@ Muốn rollout không chặn trước: thêm `--compatibility`. Bản `licensed`
 public URL/key production, yêu cầu license khi setup, polling, điều khiển và lấy
 key cloud mới. **Không bán bản `setup` như bản khóa license.**
 
-Sau cấu hình, push source của anh và để GitHub Actions build image add-on 0.3.4.
+Sau cấu hình, push source của anh và để GitHub Actions build image add-on 0.3.5.
 Chỉ phát hành HACS khi image tương ứng đã build và kiểm thử xong. Nếu thay đổi
 public config sau khi đã phát hành, tăng version rồi build/release lại.
 
@@ -237,15 +237,15 @@ public config sau khi đã phát hành, tăng version rồi build/release lại.
 
 `tools/package_release.py` tạo trong `dist/`:
 
-- `rangdong_smart-v0.3.4-setup.zip` hoặc `...-licensed.zip`: giải nén vào thư mục
+- `rangdong_smart-v0.3.5-setup.zip` hoặc `...-licensed.zip`: giải nén vào thư mục
   cấu hình HA, có đường dẫn `custom_components/rangdong_smart/`.
-- `rangdong-key-helper-local-0.3.4-setup.zip` hoặc `...-licensed.zip`: giải nén vào
+- `rangdong-key-helper-local-0.3.5-setup.zip` hoặc `...-licensed.zip`: giải nén vào
   `/addons/` của HA OS để có `/addons/rangdong_key_helper/config.yaml`. Bản local
   bỏ trường `image` trong ZIP để Supervisor build đúng source mới, không kéo nhầm
-  image 0.3.4 chưa tồn tại. Refresh store → Local add-ons → cài/build. Build cần
+  image 0.3.5 chưa tồn tại. Refresh store → Local add-ons → cài/build. Build cần
   Internet để lấy dependency và tài nguyên APK đã ghim.
 - `rangdong-license-server-1.0.0.zip`: source website để deploy.
-- `rangdong-source-0.3.4-setup.zip` hoặc `...-licensed.zip`: repo source đã lọc cho
+- `rangdong-source-0.3.5-setup.zip` hoặc `...-licensed.zip`: repo source đã lọc cho
   anh tự push; bao gồm CI, tài liệu và công cụ đóng gói.
 - `SHA256SUMS.txt`: kiểm tra toàn vẹn ZIP.
 

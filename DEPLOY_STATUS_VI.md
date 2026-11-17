@@ -46,9 +46,9 @@ thử đã hủy được giữ trong lịch sử để audit, không làm tăng
 
 Trong thư mục `dist/` của repository:
 
-- `rangdong_smart-v0.3.4-licensed.zip`: custom, URL/key production đã gắn.
-- `rangdong-key-helper-local-0.3.4-licensed.zip`: add-on build local từ source.
-- `rangdong-source-0.3.4-licensed.zip`: toàn bộ source để tự push GitHub.
+- `rangdong_smart-v0.3.5-licensed.zip`: custom, URL/key production đã gắn.
+- `rangdong-key-helper-local-0.3.5-licensed.zip`: add-on build local từ source.
+- `rangdong-source-0.3.5-licensed.zip`: toàn bộ source để tự push GitHub.
 - `rangdong-license-server-1.0.0.zip`: bản sao source website/Worker.
 - `SHA256SUMS.txt`: checksum các ZIP lần đóng hiện tại.
 
@@ -56,8 +56,8 @@ Bản `licensed` kiểm tra license khi cấu hình, polling, điều khiển v�
 cloud mới; license hết hạn/bị thu hồi khóa điều khiển nhưng giữ cấu hình. Bản
 `setup` là chế độ tương thích, không phải bản khóa license; không dùng nhầm.
 ZIP setup 0.3.0 cũ từng chứa email admin trong tài liệu đã được chuyển khỏi
-`dist/` sang `private/quarantine/`; bản 0.3.4 được đóng lại từ tài liệu đã làm sạch.
-Đã commit/push GitHub nhánh `main` ngày 17/11/2026; add-on 0.3.4 được build qua GitHub Actions. Chưa cài đè HA hoặc kiểm thử điều khiển trên thiết bị thật của anh.
+`dist/` sang `private/quarantine/`; bản 0.3.5 được đóng lại từ tài liệu đã làm sạch.
+Đã commit/push GitHub nhánh `main` ngày 17/11/2026; add-on 0.3.5 được build qua GitHub Actions. Chưa cài đè HA hoặc kiểm thử điều khiển trên thiết bị thật của anh.
 
 ## Cập nhật web: đổi mật khẩu và điện thoại
 

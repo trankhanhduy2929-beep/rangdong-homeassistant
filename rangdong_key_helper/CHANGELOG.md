@@ -1,5 +1,11 @@
 # Nhật ký thay đổi
 
+## 0.3.5 - 2026-11-17
+
+- Đóng gói lại toàn bộ source và add-on; publish image GHCR `0.3.5` cho amd64/arm64.
+- CI: bỏ `options` mặc định và ghim Frida để bundle agent deterministic.
+- Không đổi logic license, giao thức cloud hoặc điều khiển thiết bị so với 0.3.4.
+
 ## 0.3.4 - 2026-11-16
 
 - Khóa điều khiển và entity khi license hết hạn/bị thu hồi; giữ nguyên cấu hình.
