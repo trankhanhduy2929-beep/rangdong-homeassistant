@@ -71,8 +71,8 @@ class LocalKeyRecord:
         payload.update({key: value for key, value in optional.items() if value})
         return payload
 
-    def masked(self) -> dict[str, str | None]:
-        """Return metadata without exposing the complete local key."""
+    def display_record(self) -> dict[str, str | None]:
+        """Return the complete validated record for manual configuration."""
 
         return {
             "device_id": self.device_id,
@@ -80,8 +80,11 @@ class LocalKeyRecord:
             "host": self.host,
             "product_id": self.product_id,
             "protocol_version": self.protocol_version,
-            "local_key": mask_local_key(self.local_key),
+            "local_key": self.local_key,
         }
+
+    def masked(self) -> dict[str, str | None]:
+        return {**self.display_record(), "local_key": mask_local_key(self.local_key)}
 
 
 def parse_target(

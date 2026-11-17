@@ -10,4 +10,7 @@ node_modules/
 token*.json
 *.qr.png
 dist/
+.wrangler/
+.vercel/
 *.zip
+.vercel

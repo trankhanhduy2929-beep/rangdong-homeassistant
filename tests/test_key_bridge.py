@@ -96,7 +96,9 @@ class KeyBridgeTests(unittest.TestCase):
         self.assertEqual(payload["count"], 1)
         self.assertEqual(payload["devices"][0]["device_id"], "device-1")
         self.assertNotIn("0123456789abcdef", response.text)
-        self.assertEqual(get_key_bridge_records(hass)["device-1"].local_key, "0123456789abcdef")
+        self.assertEqual(
+            get_key_bridge_records(hass)["device-1"].local_key, "0123456789abcdef"
+        )
 
     def test_non_admin_cannot_read_bridge_metadata(self) -> None:
         hass = FakeHass()

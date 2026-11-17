@@ -17,7 +17,7 @@ LABEL \
     io.hass.type="app" \
     io.hass.arch="${BUILD_ARCH}" \
     org.opencontainers.image.title="Rạng Đông Key Helper" \
-    org.opencontainers.image.description="Đăng nhập cloud lấy local key; Android là phương án bổ sung" \
+    org.opencontainers.image.description="Đăng nhập cloud lấy local key và quản lý license" \
     org.opencontainers.image.source="https://github.com/trankhanhduy2929-beep/rangdong-homeassistant" \
     org.opencontainers.image.licenses="MIT AND Apache-2.0 AND GPL-2.0-only AND (LGPL-2.0-or-later WITH WxWindows-exception-3.1)"
 

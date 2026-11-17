@@ -2,7 +2,8 @@
   "config": {
     "abort": {
       "reauth_successful": "Re-authentication was successful",
-      "reconfigure_successful": "The local configuration was updated successfully"
+      "reconfigure_successful": "The local configuration was updated successfully",
+      "cloud_qr_removed": "Add the device using its IP, device ID and local key. QR setup is no longer supported."
     },
     "error": {
       "cannot_connect_local": "The device was found, but Home Assistant could not read it over the LAN. Check that the device and Home Assistant are on the same network and that TCP port 6668 is reachable.",
@@ -17,7 +18,8 @@
       "local_key_device_mismatch": "The selected local key belongs to a different Device ID. Select the matching imported device or start again.",
       "local_key_not_found": "No usable local key was found for this Device ID.",
       "local_setup_error": "The local device could not be configured. Check the IP, device ID, local key and protocol version.",
-      "login_error": "Authorization error ({code}): {msg}"
+      "login_error": "Authorization error ({code}): {msg}",
+      "license_invalid": "License is invalid or the server is unavailable. Check the key and retry."
     },
     "step": {
       "user": {
@@ -43,11 +45,10 @@
           "name": "Device name",
           "host": "Device IP address",
           "device_id": "Device ID",
-          "local_key_source": "Local key source",
           "local_key": "Local key",
           "protocol_version": "Protocol version"
         },
-        "description": "Choose how to obtain the device's local key. LAN discovery cannot reveal it. Key Helper / bridge, Tuya IoT cloud and JSON modes use a one-time import step; manual mode uses the Local key field. Auto tries Tuya protocols 3.5 through 3.1 before saving."
+        "description": "Enter the IP, device ID and local key from Key Helper. Select the protocol version or Auto."
       },
       "local_key_cloud": {
         "data": {
@@ -70,7 +71,7 @@
           "device_id": "Device ID to match",
           "bridge_refresh": "Refresh key list"
         },
-        "description": "Open Rạng Đông Key Helper 0.2.1 or newer and sign in to your Rạng Đông account. Login resources are included: no APK uploads, rooted phone or Tuya IoT project needed. The add-on sends keys to {endpoint}. Keys remain in memory; the list endpoint never returns raw keys."
+        "description": "Open Rạng Đông Key Helper 0.3.4 or newer and sign in to your Rạng Đông account. Login resources are included: no APK uploads, rooted phone or Tuya IoT project needed. The add-on sends keys to {endpoint}. Keys remain in memory; the list endpoint never returns raw keys."
       },
       "local_key_device": {
         "data": {
@@ -118,6 +119,20 @@
           "protocol_version": "Protocol version"
         },
         "description": "Update the IP address or local key, then verify direct LAN access before reloading the entry."
+      },
+      "license": {
+        "title": "License",
+        "description": "Status: {status}. Renew or buy a key: {buy_url}. A license binds one Home Assistant. Expiry locks control without deleting configuration.",
+        "data": {
+          "license_key": "License Key"
+        }
+      },
+      "local_discovered_key": {
+        "title": "Enter local key",
+        "description": "Device: {name}\n\nDevice ID: {device_id}\n\nIP: {host}\n\nProduct ID: {product_id}\n\nEnter only the local key. The integration checks the protocol and connection automatically. A product ID does not identify the device type by itself.",
+        "data": {
+          "local_key": "Local key"
+        }
       }
     }
   },
@@ -132,10 +147,24 @@
       "options": {
         "existing_cloud": "Existing authorized cloud entry",
         "json_export": "Import JSON export",
-        "android_bridge": "Key Helper / bridge (cloud or Android)",
+        "android_bridge": "Key Helper / bridge",
         "manual": "Enter local key manually",
         "tuya_cloud": "Fetch once from Tuya Cloud"
       }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "License",
+        "description": "Status: {status}. Renew or buy a key: {buy_url}. A license binds one Home Assistant. Expiry locks control without deleting configuration.",
+        "data": {
+          "license_key": "License Key"
+        }
+      }
+    },
+    "error": {
+      "license_invalid": "License is invalid or the server is unavailable. Check the key and retry."
     }
   }
 }

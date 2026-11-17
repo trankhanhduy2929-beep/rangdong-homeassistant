@@ -40,7 +40,9 @@ async def _test_page_requires_ingress_and_mutation_requires_csrf() -> None:
     )
     authorizer = Mock()
     authorizer.require_admin = AsyncMock()
-    client = TestClient(TestServer(create_app(controller, authorizer)))
+    license_client = Mock()
+    license_client.require_valid = AsyncMock()
+    client = TestClient(TestServer(create_app(controller, authorizer, license_client)))
     await client.start_server()
     try:
         forbidden = await client.get("/")

@@ -1,5 +1,24 @@
 # Rạng Đông Smart cho Home Assistant
 
+## Bản 0.3.4: license và giao diện tối giản
+
+- Add-on bỏ chế độ Android/import APK; chỉ nhập license, đăng nhập và chọn thiết bị.
+- Website Next.js trên Vercel + Cloudflare D1 + PayOS, đăng ký email/mật khẩu
+  không cần OTP; có dashboard và admin riêng.
+- Gói dùng thử 1 ngày miễn phí (một lần/tài khoản và installation), 30 ngày
+  50.000đ, vĩnh viễn 200.000đ. Cùng key cho một add-on và một custom trên cùng HA.
+- Hướng dẫn deploy/cấu hình/đóng ZIP: [LICENSE_DEPLOY_VI.md](LICENSE_DEPLOY_VI.md).
+- Website đã deploy tại `https://rangdong-license-portal.vercel.app`.
+  Trạng thái kiểm thử và ZIP: [DEPLOY_STATUS_VI.md](DEPLOY_STATUS_VI.md).
+- Giao thức cloud và điều khiển LAN đang hoạt động không thay đổi. Bản `licensed`
+  kiểm tra license khi thêm cấu hình, polling và gửi lệnh; license hết hạn/bị thu
+  hồi sẽ khóa điều khiển và làm entity không khả dụng nhưng không xóa cấu hình.
+  Bản custom dùng lease đã ký khi server tạm mất mạng; add-on tạm khóa chức năng
+  lấy/xem key cho đến khi xác minh lại được.
+
+Các mục hướng dẫn phiên bản cũ bên dưới được giữ để tham khảo; cách dùng add-on
+hiện tại nằm trong [DOCS.md](rangdong_key_helper/DOCS.md).
+
 Tích hợp tùy chỉnh cài qua HACS dành cho thiết bị **Rạng Đông Smart**, hỗ trợ
 điều khiển trực tiếp bằng giao thức Tuya trong mạng LAN và vẫn giữ phương thức
 xác thực QR cũ làm lựa chọn dự phòng.
@@ -39,8 +58,8 @@ xác thực QR cũ làm lựa chọn dự phòng.
 
 ## Giới hạn quan trọng
 
-**Đăng nhập cloud không cần Android:** add-on **0.2.1** kết hợp tích hợp
-**0.2.6** có sẵn bộ đăng nhập Rạng Đông và chuyển local key vào
+**Đăng nhập cloud không cần Android:** add-on **0.3.4** kết hợp tích hợp
+**0.3.4** có sẵn bộ đăng nhập Rạng Đông và chuyển local key vào
 Home Assistant. Nghiên cứu đã lấy được key của 9 thiết bị bằng email.
 Không cần điện thoại root hoặc Tuya IoT project. Chưa kiểm thử điều khiển LAN
 trên các thiết bị thật đó. Xem [hướng dẫn cloud](rangdong_key_helper/DOCS.md).
@@ -82,7 +101,7 @@ Kho GitHub này đồng thời là một kho ứng dụng Home Assistant:
    ```
 
 2. Cài **Rạng Đông Key Helper** và khởi động ứng dụng thủ công.
-3. Cập nhật tích hợp lên **0.2.6**, khởi động lại Home Assistant trước khi lấy key.
+3. Cập nhật tích hợp lên **0.3.4**, khởi động lại Home Assistant trước khi lấy key.
 4. Mở giao diện web helper → mục **Cloud**. Bộ đăng nhập đã có sẵn;
    **không cần import APK**. Xem [hướng dẫn](rangdong_key_helper/DOCS.md).
 5. Nhập email và mật khẩu tài khoản **Rạng Đông**, rồi bấm đăng nhập lấy key.
@@ -91,7 +110,7 @@ Kho GitHub này đồng thời là một kho ứng dụng Home Assistant:
    và chọn Device ID đã import.
 
 Mục **Android** là phương án bổ sung, chỉ mục này mới cần root và ADB.
-Cloud chạy thư viện native trong worker Linux riêng. Từ add-on 0.2.1, APK gốc
+Cloud chạy thư viện native trong worker Linux riêng. Từ add-on 0.3.4, APK gốc
 đã được đóng gói sẵn và kiểm tra SHA-256 lúc build/trước khi chuẩn bị.
 Tài khoản, mật khẩu và phiên cloud không được lưu vào image, GitHub, options
 hay log. iPhone có thể mở Ingress từ xa qua HTTPS; Home Assistant vẫn phải
@@ -128,7 +147,7 @@ Mỗi thiết bị được tạo thành một mục cấu hình (config entry) 
 
 Ứng dụng chính thức thường không hiển thị local key. Các nguồn được hỗ trợ gồm:
 
-- đăng nhập Rạng Đông bằng email trong **Key Helper 0.2.1**, không cần nhập APK,
+- đăng nhập Rạng Đông bằng email trong **Key Helper 0.3.4**, không cần nhập APK,
   Android hoặc Tuya IoT project;
 - bản dữ liệu thiết bị Tuya/Rạng Đông đã xuất từ nguồn được cấp quyền hoặc một tích hợp local
   hiện có đã chứa key;

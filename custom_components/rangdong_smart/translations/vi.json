@@ -2,7 +2,8 @@
   "config": {
     "abort": {
       "reauth_successful": "Xác thực lại thành công",
-      "reconfigure_successful": "Đã cập nhật cấu hình local thành công"
+      "reconfigure_successful": "Đã cập nhật cấu hình local thành công",
+      "cloud_qr_removed": "Hãy thêm thiết bị bằng IP, Device ID và local key. Cấu hình QR không còn được hỗ trợ."
     },
     "error": {
       "cannot_connect_local": "Đã tìm thấy thiết bị nhưng Home Assistant không đọc được qua LAN. Kiểm tra thiết bị và Home Assistant cùng mạng, đồng thời TCP cổng 6668 không bị chặn.",
@@ -17,7 +18,8 @@
       "local_key_device_mismatch": "Local key đã chọn thuộc Device ID khác. Hãy chọn đúng thiết bị trong export hoặc bắt đầu lại.",
       "local_key_not_found": "Không tìm thấy local key dùng được cho Device ID này.",
       "local_setup_error": "Không cấu hình được thiết bị local. Kiểm tra IP, Device ID, local key và phiên bản giao thức.",
-      "login_error": "Lỗi ủy quyền ({code}): {msg}"
+      "login_error": "Lỗi ủy quyền ({code}): {msg}",
+      "license_invalid": "License không hợp lệ hoặc server chưa sẵn sàng. Kiểm tra key và thử lại."
     },
     "step": {
       "user": {
@@ -43,11 +45,10 @@
           "name": "Tên thiết bị",
           "host": "Địa chỉ IP thiết bị",
           "device_id": "Device ID",
-          "local_key_source": "Nguồn local key",
           "local_key": "Local key",
           "protocol_version": "Phiên bản giao thức"
         },
-        "description": "Chọn cách lấy local key. Quét LAN không thể tiết lộ key. Key Helper / bridge, Tuya IoT cloud và JSON dùng bước import một lần; chế độ thủ công dùng ô Local key. Tự động thử giao thức Tuya 3.5 đến 3.1 trước khi lưu."
+        "description": "Nhập IP, Device ID và local key từ add-on Key Helper. Chọn phiên bản giao thức phù hợp hoặc Tự động."
       },
       "local_key_cloud": {
         "data": {
@@ -70,7 +71,7 @@
           "device_id": "Device ID để đối chiếu",
           "bridge_refresh": "Làm mới danh sách key"
         },
-        "description": "Mở add-on Rạng Đông Key Helper 0.2.1 trở lên và đăng nhập tài khoản Rạng Đông. Bộ đăng nhập đã tích hợp sẵn: không cần import APK, Android root hoặc Tuya IoT project. Add-on tự chuyển key tới {endpoint}. Home Assistant giữ key trong bộ nhớ; danh sách không trả key thô."
+        "description": "Mở add-on Rạng Đông Key Helper 0.3.4 trở lên và đăng nhập tài khoản Rạng Đông. Bộ đăng nhập đã tích hợp sẵn: không cần import APK, Android root hoặc Tuya IoT project. Add-on tự chuyển key tới {endpoint}. Home Assistant giữ key trong bộ nhớ; danh sách không trả key thô."
       },
       "local_key_device": {
         "data": {
@@ -118,6 +119,20 @@
           "protocol_version": "Phiên bản giao thức"
         },
         "description": "Cập nhật địa chỉ IP hoặc local key rồi kiểm tra kết nối LAN trước khi tải lại entry."
+      },
+      "license": {
+        "title": "License",
+        "description": "Trạng thái: {status}. Gia hạn hoặc mua key: {buy_url}. License dùng cho một Home Assistant. Khi hết hạn, điều khiển bị khóa nhưng cấu hình được giữ nguyên.",
+        "data": {
+          "license_key": "License Key"
+        }
+      },
+      "local_discovered_key": {
+        "title": "Nhập local key",
+        "description": "Thiết bị: {name}\n\nDevice ID: {device_id}\n\nIP: {host}\n\nProduct ID: {product_id}\n\nChỉ nhập local key. Tích hợp sẽ tự kiểm tra giao thức và kết nối. Product ID không phải tên loại thiết bị.",
+        "data": {
+          "local_key": "Local key"
+        }
       }
     }
   },
@@ -132,10 +147,24 @@
       "options": {
         "existing_cloud": "Cloud entry đã xác thực",
         "json_export": "Import JSON export",
-        "android_bridge": "Key Helper / bridge (cloud hoặc Android)",
+        "android_bridge": "Key Helper / bridge",
         "manual": "Nhập local key thủ công",
         "tuya_cloud": "Lấy một lần từ Tuya Cloud"
       }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "License",
+        "description": "Trạng thái: {status}. Gia hạn hoặc mua key: {buy_url}. License dùng cho một Home Assistant. Khi hết hạn, điều khiển bị khóa nhưng cấu hình được giữ nguyên.",
+        "data": {
+          "license_key": "License Key"
+        }
+      }
+    },
+    "error": {
+      "license_invalid": "License không hợp lệ hoặc server chưa sẵn sàng. Kiểm tra key và thử lại."
     }
   }
 }

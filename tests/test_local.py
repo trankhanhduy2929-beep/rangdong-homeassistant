@@ -99,9 +99,7 @@ class LocalHelpersTests(unittest.TestCase):
             LOCAL.response_dps({"dps": {1: True, "2": 50}}),
             {"1": True, "2": 50},
         )
-        self.assertIsNone(
-            LOCAL.response_dps({"Error": "bad key", "Err": "914"})
-        )
+        self.assertIsNone(LOCAL.response_dps({"Error": "bad key", "Err": "914"}))
 
 
 if __name__ == "__main__":

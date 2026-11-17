@@ -1,7 +1,7 @@
 name: Rạng Đông Key Helper
-version: "0.2.1"
+version: "0.3.4"
 slug: rangdong_key_helper
-description: Đăng nhập cloud Rạng Đông lấy local key không cần Android root; có chế độ ADB/Frida dự phòng
+description: Đăng nhập Rạng Đông lấy local key tự động và quản lý License Key
 url: https://github.com/trankhanhduy2929-beep/rangdong-homeassistant/tree/main/rangdong_key_helper
 image: ghcr.io/trankhanhduy2929-beep/rangdong-key-helper
 arch:
@@ -14,10 +14,8 @@ ingress: true
 panel_icon: mdi:key-wireless
 panel_title: Khóa Rạng Đông
 homeassistant_api: true
-options:
-  adb_port: 5555
-  package_name: com.rd.smart
+options: {}
 schema:
   android_host: str?
-  adb_port: port
-  package_name: str
+  adb_port: port?
+  package_name: str?

@@ -146,9 +146,7 @@ class RangDongLocalStatusSensor(
         }
 
 
-class RangDongLocalDpsSensor(
-    CoordinatorEntity[RangDongLocalCoordinator], SensorEntity
-):
+class RangDongLocalDpsSensor(CoordinatorEntity[RangDongLocalCoordinator], SensorEntity):
     """Expose one scalar local data point as a sensor."""
 
     _attr_has_entity_name = True
@@ -166,8 +164,7 @@ class RangDongLocalDpsSensor(
             identifiers={(DOMAIN, runtime.client.device_id)},
             manufacturer="Rạng Đông / Tuya",
             name=runtime.name,
-            model=runtime.product_id
-            or f"Tuya LAN {runtime.client.protocol_version}",
+            model=runtime.product_id or f"Tuya LAN {runtime.client.protocol_version}",
             model_id=runtime.product_id,
         )
 

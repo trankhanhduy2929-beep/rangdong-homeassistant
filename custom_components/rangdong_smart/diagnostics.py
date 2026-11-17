@@ -17,6 +17,8 @@ SENSITIVE_KEY_MARKERS = (
     "email",
     "image",
     "latitude",
+    "license",
+    "installation",
     "local_key",
     "localkey",
     "location",

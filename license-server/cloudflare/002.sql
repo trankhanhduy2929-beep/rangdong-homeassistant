@@ -1,0 +1,13 @@
+PRAGMA defer_foreign_keys = ON;
+CREATE TABLE plans_updated(id TEXT PRIMARY KEY, name TEXT NOT NULL, amount INTEGER NOT NULL CHECK(amount>=0), duration_days INTEGER CHECK(duration_days>0), active INTEGER NOT NULL DEFAULT 1);
+INSERT INTO plans_updated SELECT id,name,amount,duration_days,active FROM plans;
+DROP TABLE plans;
+ALTER TABLE plans_updated RENAME TO plans;
+INSERT INTO plans(id,name,amount,duration_days) VALUES('trial','Dùng thử 1 ngày',0,1),('monthly','1 tháng (30 ngày)',50000,30) ON CONFLICT(id) DO NOTHING;
+CREATE TABLE IF NOT EXISTS auth_credentials(user_id TEXT PRIMARY KEY REFERENCES users(id), password_hash TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS administrator_accounts(user_id TEXT PRIMARY KEY REFERENCES users(id));
+CREATE TABLE IF NOT EXISTS trial_claims(user_id TEXT PRIMARY KEY REFERENCES users(id), license_id TEXT UNIQUE NOT NULL REFERENCES licenses(id), claimed_at TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ','now')));
+CREATE TABLE IF NOT EXISTS trial_installations(installation_key TEXT PRIMARY KEY, license_id TEXT UNIQUE NOT NULL REFERENCES licenses(id), started_at TEXT NOT NULL DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ','now')));
+INSERT INTO transaction_guard(value) SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM pragma_foreign_key_check) THEN 1 ELSE 0 END;
+DELETE FROM transaction_guard;
+PRAGMA defer_foreign_keys = OFF;

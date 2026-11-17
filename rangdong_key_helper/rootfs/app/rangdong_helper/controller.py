@@ -159,14 +159,14 @@ class HelperController:
                 try:
                     self._stage = "importing"
                     bridge_result = await self._bridge.import_records(records)
-                    self._last_devices = [record.masked() for record in records]
+                    self._last_devices = [record.display_record() for record in records]
                     self._stage = "complete"
                     return {
                         "success": True,
                         "count": len(records),
                         "devices": self._last_devices,
                         "available_count": bridge_result.get("available_count"),
-                        "message": "Đã lấy và chuyển key vào Home Assistant. Mở Rạng Đông Smart → LAN → Key Helper / bridge để chọn thiết bị.",
+                        "message": "Đã lấy key. Sao chép Device ID và local key vào biểu mẫu thêm thiết bị Rạng Đông Smart.",
                     }
                 finally:
                     records.clear()
@@ -216,14 +216,14 @@ class HelperController:
 
                 self._stage = "importing"
                 bridge_result = await self._bridge.import_records(records)
-                masked_devices = [record.masked() for record in records]
+                device_records = [record.display_record() for record in records]
                 records.clear()
-                self._last_devices = masked_devices
+                self._last_devices = device_records
                 self._stage = "complete"
                 return {
                     "success": True,
-                    "count": len(masked_devices),
-                    "devices": masked_devices,
+                    "count": len(device_records),
+                    "devices": device_records,
                     "available_count": bridge_result.get("available_count"),
                     "message": (
                         "Đã import key vào Rạng Đông Smart. "

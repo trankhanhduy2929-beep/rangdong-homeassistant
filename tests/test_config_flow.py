@@ -1,4 +1,4 @@
-"""Regression tests for QR config-flow behavior."""
+"""Regression tests for config-flow behavior."""
 
 from __future__ import annotations
 
@@ -71,6 +71,24 @@ class FakeLoginControl:
 class ConfigFlowTests(unittest.TestCase):
     """Verify QR refresh and invalid-response handling."""
 
+    def test_enforced_setup_without_key_shows_license_form(self) -> None:
+        flow = RangDongConfigFlow()
+        flow.hass = FakeHass()
+        flow.context = {"source": "user"}
+        with (
+            patch("rangdong_smart.config_flow.license_config.ENFORCE", True),
+            patch("rangdong_smart.config_flow.license_manager") as manager,
+        ):
+            manager.return_value.check = AsyncMock(
+                return_value={
+                    "valid": False,
+                    "buy_url": "https://license.example.invalid/dashboard",
+                    "status": "license_required",
+                }
+            )
+            result = asyncio.run(flow.async_step_user())
+        self.assertEqual(result["step_id"], "license")
+
     def _flow(self, login_control: FakeLoginControl) -> RangDongConfigFlow:
         flow = RangDongConfigFlow()
         flow.hass = FakeHass()
@@ -80,48 +98,25 @@ class ConfigFlowTests(unittest.TestCase):
         flow._qr_token = "old-token"
         return flow
 
-    def test_failed_scan_replaces_qr_token(self) -> None:
-        flow = self._flow(
-            FakeLoginControl(
-                [
-                    {
-                        "success": True,
-                        "result": {"qrcode": "new-token"},
-                    }
-                ],
-                (False, {"code": "E0020003", "msg": "Login failed"}),
-            )
-        )
-
-        result = asyncio.run(flow.async_step_scan({"qr": None}))
-        qr_selector = next(iter(result["data_schema"].schema.values()))
-
-        self.assertEqual(result["step_id"], "scan")
-        self.assertEqual(result["errors"]["base"], "designated_app_error")
-        self.assertEqual(
-            qr_selector.config["data"],
-            "tuyaSmart--qrLogin?token=new-token",
-        )
-
-    def test_failed_refresh_returns_to_user_code(self) -> None:
-        flow = self._flow(
-            FakeLoginControl(
-                [
-                    {
-                        "success": False,
-                        "code": "NETWORK_ERROR",
-                        "msg": "Gateway unavailable",
-                    }
-                ],
-                (False, {"code": "E0020003", "msg": "Login failed"}),
-            )
-        )
+    def test_scan_step_is_removed(self) -> None:
+        flow = RangDongConfigFlow()
+        flow.hass = FakeHass()
+        flow.context = {"source": "user"}
 
         result = asyncio.run(flow.async_step_scan({"qr": None}))
 
-        self.assertEqual(result["step_id"], "cloud_qr")
-        self.assertEqual(result["errors"]["base"], "login_error")
-        self.assertEqual(flow._qr_token, "")
+        self.assertEqual(result["type"], "abort")
+        self.assertEqual(result["reason"], "cloud_qr_removed")
+
+    def test_cloud_qr_step_is_removed(self) -> None:
+        flow = RangDongConfigFlow()
+        flow.hass = FakeHass()
+        flow.context = {"source": "user"}
+
+        result = asyncio.run(flow.async_step_cloud_qr({"user_code": "UserCodeABC"}))
+
+        self.assertEqual(result["type"], "abort")
+        self.assertEqual(result["reason"], "cloud_qr_removed")
 
     def test_non_mapping_qr_response_is_rejected(self) -> None:
         flow = self._flow(FakeLoginControl([[]], (False, {})))
@@ -141,18 +136,24 @@ class ConfigFlowTests(unittest.TestCase):
         self.assertEqual(response["code"], "USERCODE_EMPTY")
         self.assertEqual(flow._qr_token, "")
 
-    def test_user_step_defaults_to_local_connection(self) -> None:
+    def test_user_step_opens_local_scan(self) -> None:
         flow = RangDongConfigFlow()
         flow.hass = FakeHass()
         flow.context = {"source": "user"}
 
-        result = asyncio.run(flow.async_step_user())
+        with (
+            patch("rangdong_smart.config_flow.license_manager") as manager,
+            patch(
+                "rangdong_smart.config_flow.scan_lan_devices",
+                return_value={},
+            ),
+        ):
+            manager.return_value.check = AsyncMock(return_value={"valid": True})
+            result = asyncio.run(flow.async_step_user())
 
-        self.assertEqual(result["step_id"], "user")
-        field = next(iter(result["data_schema"].schema))
-        self.assertEqual(field.schema, "connection_type")
-        self.assertEqual(field.default(), "local")
-        self.assertEqual(len(flow.hass.http.views), 1)
+        self.assertEqual(result["step_id"], "local_scan")
+        self.assertEqual(flow._connection_type, "local")
+        self.assertEqual(len(flow.hass.http.views), 2)
 
     def test_local_scan_prefills_discovered_device(self) -> None:
         flow = RangDongConfigFlow()
@@ -166,17 +167,22 @@ class ConfigFlowTests(unittest.TestCase):
             name="Living room",
         )
 
-        with patch(
-            "rangdong_smart.config_flow.scan_lan_devices",
-            return_value={"device-1": discovered},
+        with (
+            patch("rangdong_smart.config_flow.license_manager") as manager,
+            patch(
+                "rangdong_smart.config_flow.scan_lan_devices",
+                return_value={"device-1": discovered},
+            ),
         ):
+            manager.return_value.check = AsyncMock(return_value={"valid": True})
             result = asyncio.run(flow.async_step_user({"connection_type": "local"}))
 
         self.assertEqual(result["step_id"], "local_scan")
         next_result = asyncio.run(
             flow.async_step_local_scan({"discovered_device": "device-1"})
         )
-        self.assertEqual(next_result["step_id"], "local_device")
+        self.assertEqual(next_result["step_id"], "local_discovered_key")
+        self.assertTrue(flow._selected_lan_device)
         self.assertEqual(flow._local_device_id, "device-1")
         self.assertEqual(flow._local_host, "192.168.1.20")
         self.assertEqual(flow._local_protocol_version, "3.5")
@@ -450,7 +456,7 @@ class ConfigFlowTests(unittest.TestCase):
         self.assertEqual(result["step_id"], "local_key_bridge")
         schema_keys = {key.schema for key in result["data_schema"].schema}
         self.assertIn(CONF_BRIDGE_REFRESH, schema_keys)
-        self.assertEqual(len(flow.hass.http.views), 1)
+        self.assertEqual(len(flow.hass.http.views), 2)
 
     def test_reconfigure_local_updates_existing_entry(self) -> None:
         flow = RangDongConfigFlow()

@@ -83,7 +83,7 @@ def test_upload_rejection_cleans_temporary_files(tmp_path: Path) -> None:
     asyncio.run(exercise())
 
 
-def test_cloud_bridge_receives_raw_key_but_status_is_masked() -> None:
+def test_cloud_returns_complete_key_for_licensed_display() -> None:
     async def exercise() -> None:
         cloud = Mock()
         cloud.collect = AsyncMock(
@@ -113,7 +113,8 @@ def test_cloud_bridge_receives_raw_key_but_status_is_masked() -> None:
         result = await helper.cloud_scan(account)
         assert result["count"] == 1
         assert seen[0]["localKey"] == "0123456789abcdef"
-        assert "0123456789abcdef" not in json.dumps(result)
+        assert result["devices"][0]["local_key"] == "0123456789abcdef"
+        assert helper.status()["devices"][0]["device_id"] == "test_device"
         assert "secret" not in json.dumps(helper.status())
         assert not account
 

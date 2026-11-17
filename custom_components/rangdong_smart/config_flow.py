@@ -12,11 +12,14 @@ from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
     ConfigFlow,
     ConfigFlowResult,
+    OptionsFlow,
 )
 from homeassistant.const import CONF_DEVICE_ID, CONF_HOST, CONF_NAME
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 from tuya_sharing import LoginControl
 
+from . import license_config
 from .const import (
     CONF_ACCESS_ID,
     CONF_ACCESS_SECRET,
@@ -66,6 +69,7 @@ from .key_sources import (
     parse_local_key_export,
     records_from_existing_cloud_devices,
 )
+from .licensing import manager as license_manager
 from .local import (
     DiscoveredLocalDevice,
     RangDongLocalAuthError,
@@ -83,6 +87,35 @@ def build_qr_payload(qr_token: str) -> str:
     """Build the QR payload accepted by the ThingClips scanner."""
 
     return f"{QR_PAYLOAD_PREFIX}{qr_token}"
+
+
+class RangDongLicenseOptionsFlow(OptionsFlow):
+    async def async_step_init(self, user_input=None) -> ConfigFlowResult:
+        status = await license_manager(self.hass).check(
+            key=user_input.get("license_key") if user_input else None
+        )
+        if user_input and status["valid"]:
+            return self.async_create_entry(title="", data={})
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("license_key"): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD
+                        )
+                    )
+                }
+            ),
+            errors={"base": "license_invalid"}
+            if user_input and not status["valid"]
+            else {},
+            description_placeholders={
+                "buy_url": status["buy_url"]
+                or "Chủ dự án chưa cấu hình website license",
+                "status": status["status"],
+            },
+        )
 
 
 class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -104,6 +137,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         self._local_product_id = ""
         self._local_protocol_version = DEFAULT_PROTOCOL_VERSION
         self._local_scan_error = False
+        self._selected_lan_device = False
         self._existing_cloud_records: dict[str, LocalKeyRecord] = {}
         self._key_records: dict[str, LocalKeyRecord] = {}
         self._pending_key_record: LocalKeyRecord | None = None
@@ -111,20 +145,47 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Choose local LAN setup or the legacy QR flow."""
+        """Configure a device with its local key."""
 
         self._ensure_key_bridge_registered()
-        if user_input is None:
-            return self._show_connection_type_form()
+        if license_config.ENFORCE:
+            license_status = await license_manager(self.hass).check()
+            if not license_status["valid"]:
+                return await self.async_step_license()
+        self._connection_type = CONNECTION_LOCAL
+        return await self.async_step_local_scan()
 
-        if CONF_CONNECTION_TYPE not in user_input and CONF_USER_CODE in user_input:
-            return await self.async_step_cloud_qr(user_input)
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return RangDongLicenseOptionsFlow()
 
-        self._connection_type = user_input.get(CONF_CONNECTION_TYPE, CONNECTION_LOCAL)
-        if self._connection_type == CONNECTION_LOCAL:
-            return await self.async_step_local_scan()
-
-        return await self.async_step_cloud_qr()
+    async def async_step_license(self, user_input=None) -> ConfigFlowResult:
+        status = await license_manager(self.hass).check(
+            key=user_input.get("license_key") if user_input else None
+        )
+        if user_input and status["valid"]:
+            return await self.async_step_user()
+        return self.async_show_form(
+            step_id="license",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("license_key"): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD
+                        )
+                    )
+                }
+            ),
+            errors={"base": "license_invalid"}
+            if user_input and not status["valid"]
+            else {},
+            description_placeholders={
+                "buy_url": status["buy_url"]
+                or "Chủ dự án chưa cấu hình website license",
+                "status": status["status"],
+            },
+        )
 
     async def async_step_local_scan(
         self, user_input: dict[str, Any] | None = None
@@ -175,15 +236,20 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
         selected_id = str(user_input.get(CONF_DISCOVERED_DEVICE, DISCOVERY_MANUAL))
         discovered = self._local_devices.get(selected_id)
         if discovered is None:
+            self._selected_lan_device = False
             self._local_device_id = ""
             self._local_host = ""
             self._local_name = ""
             self._local_product_id = ""
             self._local_protocol_version = DEFAULT_PROTOCOL_VERSION
         else:
+            self._selected_lan_device = True
             self._local_device_id = discovered.device_id
             self._local_host = discovered.host
             self._local_name = discovered.name or ""
+            bridge_record = get_key_bridge_records(self.hass).get(discovered.device_id)
+            if bridge_record and bridge_record.name:
+                self._local_name = bridge_record.name
             self._local_product_id = discovered.product_id or ""
             self._local_protocol_version = (
                 discovered.protocol_version or DEFAULT_PROTOCOL_VERSION
@@ -327,6 +393,14 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
 
         errors: dict[str, str] = {}
         if user_input is not None:
+            if self._selected_lan_device:
+                user_input = {
+                    CONF_DEVICE_ID: self._local_device_id,
+                    CONF_HOST: self._local_host,
+                    CONF_NAME: self._local_name,
+                    CONF_PROTOCOL_VERSION: DEFAULT_PROTOCOL_VERSION,
+                    CONF_LOCAL_KEY: user_input.get(CONF_LOCAL_KEY, ""),
+                }
             selected_source = str(
                 user_input.get(CONF_LOCAL_KEY_SOURCE, LOCAL_KEY_SOURCE_MANUAL)
             )
@@ -378,6 +452,11 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = error
 
         return self._show_local_device_form(errors=errors, user_input=user_input)
+
+    async def async_step_local_discovered_key(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_local_device(user_input)
 
     def _ensure_key_bridge_registered(self) -> None:
         """Register the bridge while a first-time config flow is active."""
@@ -554,106 +633,12 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_cloud_qr(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the legacy QR User Code form."""
-
-        errors: dict[str, str] = {}
-        placeholders: dict[str, str] = {}
-        if user_input is not None:
-            success, response = await self._async_get_qr_code(
-                user_input.get(CONF_USER_CODE, "")
-            )
-            if success:
-                return await self.async_step_scan()
-            errors["base"] = self._error_key(response)
-            placeholders = self._error_placeholders(response)
-
-        return self._show_user_code_form(
-            step_id="cloud_qr",
-            user_code=(user_input or {}).get(CONF_USER_CODE, ""),
-            errors=errors,
-            placeholders=placeholders,
-        )
+        return self.async_abort(reason="cloud_qr_removed")
 
     async def async_step_scan(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Show the QR code and finish after the app approves it."""
-
-        if user_input is None:
-            if not self._user_code or not self._qr_token:
-                return self._show_user_code_form(
-                    step_id=self._user_code_step_id(),
-                    user_code=self._user_code,
-                )
-            return self._show_scan_form()
-
-        try:
-            success, info = await self.hass.async_add_executor_job(
-                self._login_control.login_result,
-                self._qr_token,
-                TUYA_CLIENT_ID,
-                self._user_code,
-            )
-        except (requests.RequestException, ValueError, KeyError, TypeError):
-            success, info = (
-                False,
-                {
-                    "code": "NETWORK_ERROR",
-                    "msg": "Unable to reach the Tuya authorization gateway",
-                },
-            )
-        if not isinstance(info, Mapping):
-            success, info = (
-                False,
-                {
-                    "code": "INVALID_RESPONSE",
-                    "msg": "Gateway returned an invalid login response",
-                },
-            )
-        if not success:
-            error_key = self._error_key(info)
-            placeholders = self._error_placeholders(info)
-            refreshed, refresh_response = await self._async_get_qr_code(self._user_code)
-            if not refreshed:
-                return self._show_user_code_form(
-                    step_id=self._user_code_step_id(),
-                    user_code=self._user_code,
-                    errors={"base": self._error_key(refresh_response)},
-                    placeholders=self._error_placeholders(refresh_response),
-                )
-            return self._show_scan_form(
-                errors={"base": error_key},
-                placeholders=placeholders,
-            )
-
-        try:
-            entry_data = self._entry_data(info, self._user_code)
-        except ValueError as error:
-            return self._show_scan_form(
-                errors={"base": "login_error"},
-                placeholders={"code": "INVALID_RESPONSE", "msg": str(error)},
-            )
-
-        if self.source in {SOURCE_REAUTH, SOURCE_RECONFIGURE}:
-            await self.async_set_unique_id(str(entry_data[CONF_TOKEN_INFO]["uid"]))
-            self._abort_if_unique_id_mismatch()
-            entry = (
-                self._get_reauth_entry()
-                if self.source == SOURCE_REAUTH
-                else self._get_reconfigure_entry()
-            )
-            return self.async_update_reload_and_abort(
-                entry,
-                data=entry_data,
-            )
-
-        await self.async_set_unique_id(str(entry_data[CONF_TOKEN_INFO]["uid"]))
-        self._abort_if_unique_id_configured()
-
-        return self.async_create_entry(
-            title=info.get("username") or "Rạng Đông Smart",
-            data=entry_data,
-        )
+        return self.async_abort(reason="cloud_qr_removed")
 
     async def async_step_reauth(
         self, entry_data: Mapping[str, Any]
@@ -670,34 +655,12 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
             )
             return await self.async_step_reauth_local()
 
-        if user_code := entry_data.get(CONF_USER_CODE):
-            success, _ = await self._async_get_qr_code(str(user_code))
-            if success:
-                return await self.async_step_scan()
-        return await self.async_step_reauth_user_code()
+        return self.async_abort(reason="cloud_qr_removed")
 
     async def async_step_reauth_user_code(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Ask for a replacement User Code during reauthorization."""
-
-        errors: dict[str, str] = {}
-        placeholders: dict[str, str] = {}
-        if user_input is not None:
-            success, response = await self._async_get_qr_code(
-                user_input.get(CONF_USER_CODE, "")
-            )
-            if success:
-                return await self.async_step_scan()
-            errors["base"] = self._error_key(response)
-            placeholders = self._error_placeholders(response)
-
-        return self._show_user_code_form(
-            step_id="reauth_user_code",
-            user_code=(user_input or {}).get(CONF_USER_CODE, ""),
-            errors=errors,
-            placeholders=placeholders,
-        )
+        return self.async_abort(reason="cloud_qr_removed")
 
     async def _async_get_qr_code(self, user_code: str) -> tuple[bool, dict[str, Any]]:
         """Request a temporary QR token from the Tuya gateway."""
@@ -796,6 +759,28 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Render local device credentials and protocol settings."""
 
+        if self._selected_lan_device:
+            return self.async_show_form(
+                step_id="local_discovered_key",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_LOCAL_KEY): selector.TextSelector(
+                            selector.TextSelectorConfig(
+                                type=selector.TextSelectorType.PASSWORD
+                            )
+                        ),
+                    }
+                ),
+                errors=errors or {},
+                description_placeholders={
+                    "name": self._local_name
+                    or f"Rạng Đông / Tuya {self._local_device_id[-6:]}",
+                    "device_id": self._local_device_id,
+                    "host": self._local_host,
+                    "product_id": self._local_product_id or "—",
+                },
+            )
+
         values = user_input or {}
         device_id = str(values.get(CONF_DEVICE_ID, self._local_device_id))
         host = str(values.get(CONF_HOST, self._local_host))
@@ -814,17 +799,7 @@ class RangDongConfigFlow(ConfigFlow, domain=DOMAIN):
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
             )
         else:
-            source = str(values.get(CONF_LOCAL_KEY_SOURCE, LOCAL_KEY_SOURCE_MANUAL))
-            schema[vol.Required(CONF_LOCAL_KEY_SOURCE, default=source)] = (
-                selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=self._local_key_source_options(),
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                        translation_key="local_key_source",
-                    )
-                )
-            )
-            schema[vol.Optional(CONF_LOCAL_KEY)] = selector.TextSelector(
+            schema[vol.Required(CONF_LOCAL_KEY)] = selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
             )
         schema[

@@ -16,14 +16,8 @@ from .cloud import parse_cloud_login
 from .constants import ADDON_PORT, MAX_REQUEST_BYTES
 from .controller import HelperController
 from .errors import HelperError
+from .licensing import AddonLicense
 from .page import PAGE_TEMPLATE
-from .validation import (
-    normalize_host,
-    normalize_pairing_code,
-    normalize_port,
-    parse_login,
-    parse_target,
-)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,10 +25,12 @@ _LOGGER = logging.getLogger(__name__)
 def create_app(
     controller: HelperController | None = None,
     authorizer: HomeAssistantUserAuthorizer | None = None,
+    license_client: AddonLicense | None = None,
 ) -> web.Application:
     """Create the add-on application."""
 
     helper = controller or HelperController()
+    licensing = license_client or AddonLicense()
     user_authorizer = authorizer or HomeAssistantUserAuthorizer()
     csrf_token = secrets.token_urlsafe(32)
 
@@ -134,69 +130,39 @@ def create_app(
         return web.json_response({"success": True})
 
     async def status(_request: web.Request) -> web.Response:
+        await licensing.require_valid()
         return web.json_response(helper.status())
 
-    async def pair(request: web.Request) -> web.Response:
-        payload = await _read_payload(request)
-        host = normalize_host(payload.get("host"))
-        port = normalize_port(payload.get("pairing_port"), "Cổng ghép đôi")
-        code = normalize_pairing_code(payload.get("pairing_code"))
-        payload["pairing_code"] = None
-        return web.json_response(await helper.pair(host, port, code))
-
-    async def prepare(request: web.Request) -> web.Response:
-        payload = await _read_payload(request)
-        target = parse_target(
-            payload,
-            default_host=helper.options.android_host,
-            default_port=helper.options.adb_port,
-            default_package=helper.options.package_name,
-        )
-        return web.json_response(await helper.prepare(target))
-
-    async def scan(request: web.Request) -> web.Response:
-        payload = await _read_payload(request)
-        target = parse_target(
-            payload,
-            default_host=helper.options.android_host,
-            default_port=helper.options.adb_port,
-            default_package=helper.options.package_name,
-        )
-        return web.json_response(await helper.scan(target, None))
-
-    async def login_scan(request: web.Request) -> web.Response:
-        payload = await _read_payload(request)
-        target = parse_target(
-            payload,
-            default_host=helper.options.android_host,
-            default_port=helper.options.adb_port,
-            default_package=helper.options.package_name,
-        )
-        credentials = parse_login(payload)
-        payload["password"] = None
-        try:
-            return web.json_response(await helper.scan(target, credentials))
-        finally:
-            credentials = None
-
     async def cloud_login(request: web.Request) -> web.Response:
+        await licensing.require_valid()
         payload = await _read_payload(request)
         try:
             credentials = parse_cloud_login(payload)
         finally:
             payload.clear()
         try:
-            return web.json_response(await helper.cloud_scan(credentials))
+            result = await helper.cloud_scan(credentials)
+            try:
+                await licensing.require_valid()
+            except HelperError:
+                await helper.clear_bridge()
+                raise
+            return web.json_response(result)
         finally:
             credentials.clear()
 
-    async def cloud_upload(request: web.Request) -> web.Response:
-        return web.json_response(
-            await helper.upload_cloud_apk(request.match_info["kind"], request.content)
-        )
+    async def license_status(_request: web.Request) -> web.Response:
+        return web.json_response(await licensing.status())
 
-    async def cloud_clear(_request: web.Request) -> web.Response:
-        return web.json_response(await helper.clear_cloud_assets())
+    async def license_activate(request: web.Request) -> web.Response:
+        payload = await _read_payload(request)
+        try:
+            key = payload.get("key")
+            if not isinstance(key, str) or not 10 <= len(key) <= 128:
+                raise HelperError("invalid_license", "Nhập License Key hợp lệ.")
+            return web.json_response(await licensing.status(key))
+        finally:
+            payload.clear()
 
     async def clear_bridge(_request: web.Request) -> web.Response:
         return web.json_response(await helper.clear_bridge())
@@ -207,13 +173,9 @@ def create_app(
     app.router.add_get("/", index)
     app.router.add_get("/health", health)
     app.router.add_get("/api/status", status)
-    app.router.add_post("/api/pair", pair)
-    app.router.add_post("/api/prepare", prepare)
-    app.router.add_post("/api/scan", scan)
-    app.router.add_post("/api/login-scan", login_scan)
     app.router.add_post("/api/cloud/login-scan", cloud_login)
-    app.router.add_post("/api/cloud/apk/{kind}", cloud_upload)
-    app.router.add_delete("/api/cloud/apk", cloud_clear)
+    app.router.add_get("/api/license", license_status)
+    app.router.add_post("/api/license", license_activate)
     app.router.add_delete("/api/bridge", clear_bridge)
     app.on_cleanup.append(cleanup)
     return app

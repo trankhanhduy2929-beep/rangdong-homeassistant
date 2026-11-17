@@ -48,11 +48,11 @@ def _controller() -> tuple[
     return controller, adb, installer, frida, bridge
 
 
-def test_scan_imports_records_but_returns_only_masked_key() -> None:
-    asyncio.run(_test_scan_imports_records_but_returns_only_masked_key())
+def test_scan_imports_records_and_returns_complete_key_for_display() -> None:
+    asyncio.run(_test_scan_imports_records_and_returns_complete_key_for_display())
 
 
-async def _test_scan_imports_records_but_returns_only_masked_key() -> None:
+async def _test_scan_imports_records_and_returns_complete_key_for_display() -> None:
     controller, adb, _installer, frida, bridge = _controller()
     credentials = LoginCredentials("84", "900000000", "temporary-password")
     imported_records = []
@@ -68,8 +68,7 @@ async def _test_scan_imports_records_but_returns_only_masked_key() -> None:
         credentials,
     )
 
-    assert result["devices"][0]["local_key"] == "0123…cdef"
-    assert "0123456789abcdef" not in repr(result)
+    assert result["devices"][0]["local_key"] == "0123456789abcdef"
     frida.collect.assert_awaited_once_with(1234, credentials)
     assert imported_records[0].device_id == "device-1"
     adb.remove_forward.assert_awaited_once()

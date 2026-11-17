@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
+from urllib.parse import urlencode
 
 from aiohttp import ClientSession, ClientTimeout
 
@@ -61,6 +62,31 @@ class HomeAssistantBridge:
             if error.code != "bridge_not_found":
                 raise
             return {"success": True, "devices": []}
+
+    async def license_request(
+        self, client_id: str, key: str | None = None
+    ) -> dict[str, Any]:
+        url = self._url.rsplit("/", 1)[0] + "/license"
+        payload = {"component": "addon", "client_id": client_id}
+        if key is not None:
+            payload["key"] = key
+        try:
+            for attempt in range(2):
+                try:
+                    if key is None:
+                        return await self._request(
+                            "GET", url + "?" + urlencode(payload)
+                        )
+                    return await self._request("POST", url, json=payload)
+                except HelperError as error:
+                    if error.code != "bridge_not_found" or attempt:
+                        raise
+                    await self._activate_integration()
+            raise HelperError(
+                "license_unavailable", "Cập nhật custom Rạng Đông để dùng license."
+            )
+        finally:
+            payload.clear()
 
     async def _activate_integration(self) -> None:
         """Load the config flow once so it can register the bridge view."""

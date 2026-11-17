@@ -19,6 +19,7 @@ from .key_sources import (
     RangDongKeyExportError,
     parse_local_key_export,
 )
+from .licensing import register_license_view
 
 MAX_BRIDGE_BODY_BYTES = 512 * 1024
 
@@ -93,6 +94,7 @@ def public_key_bridge_records(
 def register_key_bridge(hass: HomeAssistant) -> None:
     """Register the authenticated import endpoint once."""
 
+    register_license_view(hass)
     get_key_bridge_runtime(hass)
     if hass.data.get(KEY_BRIDGE_VIEW_REGISTERED):
         return

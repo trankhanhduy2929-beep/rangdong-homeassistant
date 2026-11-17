@@ -37,9 +37,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class RangDongLocalDpsSwitch(
-    CoordinatorEntity[RangDongLocalCoordinator], SwitchEntity
-):
+class RangDongLocalDpsSwitch(CoordinatorEntity[RangDongLocalCoordinator], SwitchEntity):
     """Control one boolean Tuya data point over TCP 6668."""
 
     _attr_has_entity_name = True
@@ -60,8 +58,7 @@ class RangDongLocalDpsSwitch(
             identifiers={(DOMAIN, runtime.client.device_id)},
             manufacturer="Rạng Đông / Tuya",
             name=runtime.name,
-            model=runtime.product_id
-            or f"Tuya LAN {runtime.client.protocol_version}",
+            model=runtime.product_id or f"Tuya LAN {runtime.client.protocol_version}",
         )
         self._state = bool(initial_value)
 
