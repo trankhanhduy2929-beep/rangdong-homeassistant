@@ -14,7 +14,6 @@ ingress: true
 panel_icon: mdi:key-wireless
 panel_title: Khóa Rạng Đông
 homeassistant_api: true
-options: {}
 schema:
   android_host: str?
   adb_port: port?

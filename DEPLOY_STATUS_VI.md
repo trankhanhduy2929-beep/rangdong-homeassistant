@@ -1,4 +1,4 @@
-# Trạng thái triển khai ngày 16/11/2026
+# Trạng thái triển khai ngày 17/11/2026
 
 ## Đã triển khai
 
@@ -57,7 +57,7 @@ cloud mới; license hết hạn/bị thu hồi khóa điều khiển nhưng gi�
 `setup` là chế độ tương thích, không phải bản khóa license; không dùng nhầm.
 ZIP setup 0.3.0 cũ từng chứa email admin trong tài liệu đã được chuyển khỏi
 `dist/` sang `private/quarantine/`; bản 0.3.4 được đóng lại từ tài liệu đã làm sạch.
-Không commit/push GitHub hoặc cài đè HA của anh trong lượt này.
+Đã commit/push GitHub nhánh `main` ngày 17/11/2026; add-on 0.3.4 được build qua GitHub Actions. Chưa cài đè HA hoặc kiểm thử điều khiển trên thiết bị thật của anh.
 
 ## Cập nhật web: đổi mật khẩu và điện thoại
 
